@@ -3,6 +3,8 @@
 ## Project Overview
 Create a single-page application (SPA) called **Argos** (Architecture Repository for Governance and Operational Standards) that visualizes and manages architectural frameworks based on the OMG Unified Architecture Framework (UAF).
 
+NO THIRD PARTY CODE or LIBRARIES -- this all will be a single .html file too!
+
 ## Core Concept
 Argos displays a grid matrix where:
 - **Y-axis**: Represents various architectural domains
