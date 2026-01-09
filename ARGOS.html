@@ -6,14 +6,15 @@
   <title>Argos — Architecture Repository for Governance &amp; Operational Standards</title>
   <style>
     :root {
+      --bg-base:#f4f4f8;
+      --bg-panel:#ffffff;
       --bg-dark:#04070f;
-      --bg-panel:#0b1220;
-      --bg-light:#f8fafc;
+      --text-dark:#1c1c26;
       --text-light:#eef2ff;
-      --text-muted:#96a0b8;
-      --brand:#55f0d7;
-      --border:#1f2a3d;
-      --panel-shadow:0 20px 45px rgba(5, 11, 22, 0.65);
+      --text-muted:#5c6375;
+      --brand:#3dd1c8;
+      --border:#d4d9ea;
+      --panel-shadow:0 20px 45px rgba(15, 23, 42, 0.15);
     }
 
     * { box-sizing:border-box; }
@@ -22,180 +23,250 @@
       margin:0;
       min-height:100vh;
       font-family:"Space Grotesk", "Inter", system-ui, sans-serif;
-      background:var(--bg-dark);
-      color:var(--text-light);
-      transition:background 0.3s ease, color 0.3s ease;
-    }
-
-    body.theme-light {
-      background:#f4f5fa;
-      color:#1f2530;
-    }
-
-    .app-shell {
-      max-width:1200px;
-      margin:0 auto;
-      padding:1.5rem;
+      background:var(--bg-base);
+      color:var(--text-dark);
       display:flex;
       flex-direction:column;
-      gap:1.5rem;
+    }
+
+    body.theme-dark {
+      background:#050914;
+      color:var(--text-light);
     }
 
     .app-header {
       display:flex;
       align-items:center;
       justify-content:space-between;
-      padding:0.4rem 0;
+      position:sticky;
+      top:0;
+      z-index:5;
+      padding:0.75rem 1.25rem;
+      background:rgba(255,255,255,0.92);
+      border-bottom:1px solid var(--border);
+      backdrop-filter:blur(12px);
     }
 
-    .hamburger {
-      border:0;
-      background:transparent;
-      width:46px;
-      height:46px;
-      border-radius:12px;
+    body.theme-dark .app-header {
+      background:rgba(3, 7, 17, 0.95);
+      border-color:rgba(255,255,255,0.08);
+    }
+
+    .app-logo {
       display:flex;
-      flex-direction:column;
-      justify-content:center;
-      gap:6px;
-      padding:0;
-      cursor:pointer;
-      position:relative;
-    }
-
-    .hamburger span {
-      display:block;
-      height:3px;
-      background:var(--brand);
-      border-radius:999px;
-    }
-
-    .brand {
-      flex:1;
-      padding-left:1rem;
-    }
-
-    .brand-mark {
-      font-size:1.25rem;
+      align-items:center;
+      gap:0.5rem;
       font-weight:600;
-      letter-spacing:0.06em;
-      text-transform:uppercase;
-      display:block;
-      color:var(--brand);
-      margin-bottom:0.25rem;
     }
 
-    .brand p {
-      margin:0;
-      color:var(--text-muted);
-      font-size:0.85rem;
+    .app-logo span {
+      color:var(--brand);
+      text-transform:uppercase;
+      letter-spacing:0.1em;
     }
 
     .header-actions {
       display:flex;
-      gap:0.75rem;
+      align-items:center;
+      gap:0.5rem;
     }
 
-    .header-actions button,
-    .panel-controls button,
-    .panel-actions button,
-    .toolbar-actions button {
+    .icon-button,
+    .action-button {
       border:0;
       border-radius:999px;
-      padding:0.55rem 1rem;
-      font-size:0.85rem;
+      padding:0.5rem 0.95rem;
       font-weight:600;
       cursor:pointer;
-      background:linear-gradient(135deg,var(--brand),#2f92ff);
-      color:#03060f;
+      background:var(--brand);
+      color:#021118;
       transition:transform 0.2s ease;
     }
 
-    button:active { transform:scale(0.98); }
+    .icon-button span {
+      display:block;
+      width:20px;
+      height:2px;
+      background:#021118;
+      margin:4px 0;
+      border-radius:2px;
+    }
 
-    .layout {
-      background:var(--panel);
-      border-radius:20px;
+    .mode-toggle {
+      background:transparent;
+      border:1px solid rgba(0,0,0,0.1);
+      color:var(--text-dark);
+    }
+
+    body.theme-dark .mode-toggle {
+      border-color:rgba(255,255,255,0.4);
+      color:var(--text-light);
+    }
+
+    main.grid-workspace {
+      flex:1;
+      position:relative;
+      display:flex;
+      width:100%;
+      overflow:hidden;
+    }
+
+    .mode-panel {
+      flex:1;
       padding:1.25rem;
-      box-shadow:var(--panel-shadow);
-      border:1px solid rgba(255,255,255,0.05);
-      display:grid;
-      grid-template-columns:minmax(240px,280px) minmax(0,1fr);
-      gap:1.25rem;
-    }
-
-    body.theme-light .layout {
-      background:#fff;
-      border-color:#e3e9f5;
-      box-shadow:0 20px 45px rgba(15,23,42,0.15);
-    }
-
-    .panel {
-      background:rgba(255,255,255,0.02);
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,0.05);
-      padding:1.1rem;
       display:flex;
       flex-direction:column;
       gap:1rem;
-      min-height:360px;
     }
 
-    body.theme-light .panel {
-      background:#f6f7fb;
-      border-color:#dbe2ef;
-    }
-
-    .panel-header h2 {
-      margin:0;
-      font-size:1.1rem;
-      letter-spacing:0.02em;
-    }
-
-    .helper-text {
-      margin:0.25rem 0 0;
-      color:var(--text-muted);
-      font-size:0.82rem;
-    }
-
-    .panel-controls {
+    .grid-canvas {
+      flex:1;
+      background:var(--bg-panel);
+      border-radius:18px;
+      box-shadow:var(--panel-shadow);
       display:flex;
       flex-direction:column;
-      gap:0.75rem;
+      overflow:hidden;
     }
 
-    #overlaySearch {
+    body.theme-dark .grid-canvas {
+      background:#0c1420;
+      box-shadow:0 25px 50px rgba(0,0,0,0.4);
+    }
+
+    .grid-wrapper {
+      flex:1;
+      overflow:auto;
+      padding:0.5rem;
+      min-height:0;
+    }
+
+    .grid-wrapper table {
       width:100%;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,0.03);
-      padding:0.55rem 1rem;
-      font-size:0.9rem;
+      height:100%;
+      border-collapse:collapse;
+    }
+
+    .grid-wrapper th,
+    .grid-wrapper td {
+      border:1px solid rgba(0,0,0,0.05);
+      min-width:140px;
+      height:100px;
+      padding:0.5rem;
+      font-size:0.8rem;
+      line-height:1.25;
+      vertical-align:top;
+      word-break:break-word;
+      overflow:hidden;
       color:inherit;
+    }
+
+    body.theme-dark .grid-wrapper th,
+    body.theme-dark .grid-wrapper td {
+      color:#f7f8ff;
+    }
+
+    .grid-wrapper th {
+      text-transform:uppercase;
+      font-size:0.7rem;
+      letter-spacing:0.08em;
+    }
+
+    .domain-label {
+      font-weight:700;
+    }
+
+    .cell-content {
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      flex-direction:column;
+      gap:0.35rem;
+    }
+
+    .cell-label {
+      font-size:0.75rem;
+    }
+
+    .grid-wrapper.hide-labels .cell-label {
+      opacity:0;
+    }
+
+    .overlay-drawer {
+      position:absolute;
+      top:0;
+      right:0;
+      width:320px;
+      height:100%;
+      background:var(--bg-panel);
+      border-left:1px solid rgba(0,0,0,0.08);
+      box-shadow:-10px 15px 40px rgba(0,0,0,0.25);
+      transform:translateX(100%);
+      transition:transform 0.25s ease;
+      padding:1.25rem;
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+      z-index:4;
+    }
+
+    body.theme-dark .overlay-drawer {
+      background:#0c1420;
+      border-color:rgba(255,255,255,0.08);
+      box-shadow:-10px 15px 40px rgba(0,0,0,0.8);
+    }
+
+    body.menu-open .overlay-drawer {
+      transform:translateX(0);
+    }
+
+    .drawer-header h2 {
+      margin:0;
+      font-size:1.1rem;
+    }
+
+    .drawer-controls {
+      display:flex;
+      gap:0.5rem;
+      flex-wrap:wrap;
+    }
+
+    .drawer-controls button {
+      flex:1;
+      font-size:0.75rem;
+      padding:0.45rem 0.7rem;
+      border-radius:8px;
+      background:rgba(255,255,255,0.1);
+      color:inherit;
+      border:1px solid rgba(255,255,255,0.1);
+    }
+
+    body.theme-dark .drawer-controls button {
+      background:rgba(255,255,255,0.08);
+      border-color:rgba(255,255,255,0.2);
     }
 
     .overlay-list {
       flex:1;
+      overflow:auto;
       display:flex;
       flex-direction:column;
-      gap:0.9rem;
-      padding-right:0.25rem;
-      overflow-y:auto;
+      gap:0.75rem;
     }
 
     .overlay-card {
-      border:1px solid rgba(255,255,255,0.06);
+      border:1px solid rgba(0,0,0,0.1);
       border-radius:12px;
-      padding:0.85rem;
+      padding:0.75rem;
+      background:rgba(255,255,255,0.9);
       display:flex;
       flex-direction:column;
-      gap:0.3rem;
-      background:rgba(255,255,255,0.01);
+      gap:0.2rem;
     }
 
-    body.theme-light .overlay-card {
-      border-color:#e0e4f0;
-      background:#fff;
+    body.theme-dark .overlay-card {
+      background:rgba(255,255,255,0.04);
+      border-color:rgba(255,255,255,0.15);
     }
 
     .overlay-card strong {
@@ -212,186 +283,190 @@
       color:var(--brand);
     }
 
-    .grid-section {
-      background:rgba(255,255,255,0.02);
-      border-radius:16px;
-      padding:1.1rem;
-      display:flex;
-      flex-direction:column;
-      gap:1rem;
-    }
-
-    body.theme-light .grid-section {
-      background:#fff;
-    }
-
-    .grid-toolbar {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:1rem;
-      font-size:0.9rem;
-      color:var(--text-muted);
-    }
-
-    .grid-toolbar strong {
-      color:var(--text-light);
-    }
-
-    .toolbar-actions {
-      display:flex;
-      gap:0.75rem;
-    }
-
-    .grid-wrapper {
-      overflow:auto;
-      border-radius:14px;
-      background:linear-gradient(180deg,rgba(3,6,12,0.7),rgba(5,10,20,0.95));
-      padding:0.5rem;
-    }
-
-    .uaf-grid {
-      width:100%;
-      border-collapse:collapse;
-    }
-
-    .uaf-grid th,
-    .uaf-grid td {
-      border:1px solid rgba(255,255,255,0.08);
-      min-width:140px;
-      height:100px;
-      vertical-align:top;
-      padding:0.5rem;
-      font-size:0.8rem;
-      line-height:1.2;
-      color:#fff;
-      position:relative;
-      overflow:hidden;
-    }
-
-    body.theme-light .uaf-grid th,
-    body.theme-light .uaf-grid td {
-      color:#1f2530;
-    }
-
-    .uaf-grid th {
-      background:rgba(255,255,255,0.03);
-      font-size:0.75rem;
-      text-transform:uppercase;
-      letter-spacing:0.1em;
-    }
-
-    .domain-label {
-      background:rgba(255,255,255,0.07);
-      min-width:200px;
+    .overlay-card button {
+      align-self:flex-start;
+      margin-top:0.35rem;
+      background:rgba(0,0,0,0.05);
+      border:0;
+      border-radius:8px;
+      padding:0.35rem 0.8rem;
+      cursor:pointer;
       font-weight:600;
     }
 
-    .cell-content {
-      width:100%;
-      height:100%;
+    .editor-panel {
+      display:none;
+      background:rgba(255,255,255,0.9);
+      border-radius:18px;
+      box-shadow:var(--panel-shadow);
+      padding:1.25rem;
+    }
+
+    body.theme-dark .editor-panel {
+      background:rgba(7,12,22,0.9);
+    }
+
+    .editor-panel.active {
       display:flex;
-      align-items:flex-start;
-      justify-content:flex-start;
+    }
+
+    .editor-panel h3 {
+      margin:0;
+    }
+
+    .editor-panel textarea {
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--border);
+      padding:0.75rem;
+      font-family:inherit;
+      resize:vertical;
+    }
+
+    .editor-actions {
+      display:flex;
+      gap:0.5rem;
+    }
+
+    .modal {
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:1.5rem;
+      z-index:10;
+    }
+
+    .modal.visible {
+      display:flex;
+    }
+
+    .modal-card {
+      background:var(--bg-panel);
+      border-radius:16px;
+      width:100%;
+      max-width:480px;
+      padding:1.5rem;
+      box-shadow:var(--panel-shadow);
+      display:flex;
       flex-direction:column;
-      gap:0.35rem;
-      padding-top:0.2rem;
+      gap:1rem;
     }
 
-    .cell-label {
-      font-size:0.75rem;
-      text-transform:none;
-      line-height:1.3;
+    body.theme-dark .modal-card {
+      background:#0c1420;
+      color:var(--text-light);
     }
 
-    .uaf-grid.hide-labels .cell-label {
-      opacity:0;
+    .modal-card input,
+    .modal-card textarea {
+      width:100%;
+      border-radius:10px;
+      border:1px solid var(--border);
+      padding:0.55rem 0.75rem;
+      font-family:inherit;
     }
 
-    @media (max-width:960px) {
-      .layout {
-        grid-template-columns:1fr;
-      }
-
-      .uaf-grid th,
-      .uaf-grid td {
-        min-width:110px;
-        height:80px;
-        font-size:0.7rem;
-      }
+    .modal-actions {
+      display:flex;
+      justify-content:flex-end;
+      gap:0.5rem;
     }
 
-    @media (max-width:640px) {
-      .layout {
-        padding:0.75rem;
+    .modal-actions button {
+      border-radius:999px;
+      border:0;
+      padding:0.5rem 1rem;
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    .modal-close {
+      background:rgba(255,255,255,0.1);
+    }
+
+    @media (max-width:900px) {
+      .overlay-drawer {
+        width:100%;
       }
 
-      .app-shell {
-        padding:1rem;
-      }
-
-      .panel,
-      .grid-section {
-        padding:0.9rem;
-      }
-
-      .header-actions {
+      main.grid-workspace {
         flex-direction:column;
       }
     }
   </style>
 </head>
-<body class="theme-dark" data-mode="viewer">
-  <div class="app-shell">
-    <header class="app-header">
-      <button class="hamburger" aria-label="Open main menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <div class="brand">
-        <span class="brand-mark">Argos</span>
-        <p>Architecture Repository for Governance &amp; Operational Standards</p>
-      </div>
-      <div class="header-actions">
-        <button id="modeToggle">Switch to Editor Mode</button>
-        <button id="themeToggle">Switch to Light Mode</button>
-      </div>
-    </header>
+<body class="theme-light" data-mode="viewer">
+  <header class="app-header">
+    <button class="icon-button" id="menuToggle" aria-label="Open overlays menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="app-logo">
+      <span>Argos</span>
+      <span>Architecture Repository</span>
+    </div>
+    <div class="header-actions">
+      <button class="mode-toggle" id="modeToggle">Viewer Mode</button>
+      <button class="action-button" id="themeToggle">Dark Theme</button>
+    </div>
+  </header>
 
-    <div class="layout">
-      <aside class="panel">
-        <div class="panel-header">
-          <h2>Overlays</h2>
-          <p class="helper-text">Toggle visibility, merge order, and search by name or description.</p>
+  <main class="grid-workspace">
+    <section class="mode-panel viewer-panel" data-mode-panel="viewer">
+      <div class="grid-canvas">
+        <div class="grid-wrapper" id="gridWrapper">
+          <table id="gridMount"></table>
         </div>
-        <div class="panel-actions" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-          <button id="importButton">Import Overlays</button>
-          <button id="exportButton">Export State</button>
-          <button id="clearStorage">Clear Storage</button>
-          <input type="file" accept="application/json" id="importInput" style="display:none" />
-        </div>
-        <div class="panel-controls">
-          <button id="hideAllButton">Hide Grid Labels</button>
-          <input type="search" id="overlaySearch" placeholder="Search overlays" />
-        </div>
-        <div class="overlay-list" id="overlayList" aria-live="polite"></div>
-      </aside>
+      </div>
+    </section>
 
-      <section class="grid-section">
-        <div class="grid-toolbar">
-          <div>
-            <strong data-mode-indicator>Viewer Mode</strong>
-            <span>Use overlays to highlight viewpoints or compare frameworks.</span>
-          </div>
-          <div class="toolbar-actions">
-            <button id="hideAllButtonDuplicate" aria-hidden="true" disabled>Layer Merge Preview</button>
-          </div>
+    <section class="mode-panel editor-panel" data-mode-panel="editor">
+      <div>
+        <h3>Editor Mode</h3>
+        <p>Select viewpoints by name to create a new overlay. Use the drawer to manage overlays once saved.</p>
+        <p style="color:var(--text-muted);font-size:0.85rem;">Enter label text exactly as shown in the grid (new line separated).</p>
+      </div>
+      <textarea id="editorTextarea" rows="4" placeholder="Enter viewpoint labels here"></textarea>
+      <div class="editor-actions">
+        <button class="action-button" id="createCustomOverlay">Create Custom Overlay</button>
+      </div>
+    </section>
+
+    <aside class="overlay-drawer" id="overlayDrawer">
+      <div class="drawer-header">
+        <h2>Layers</h2>
+        <p style="margin:0;font-size:0.8rem;color:var(--text-muted);">Drag order affects merged overlays, visibility filters what renders.</p>
+      </div>
+      <div class="drawer-controls">
+        <button id="importButton">Import</button>
+        <button id="exportButton">Export</button>
+        <button id="clearStorage">Clear</button>
+      </div>
+      <div class="drawer-controls">
+        <button id="hideAllButton">Hide Labels</button>
+        <input type="search" id="overlaySearch" placeholder="Search overlays" style="flex:1;border-radius:12px;border:1px solid var(--border);padding:0.4rem 0.9rem;" />
+      </div>
+      <div class="overlay-list" id="overlayList"></div>
+      <input type="file" accept="application/json" id="importInput" style="display:none" />
+    </aside>
+  </main>
+
+  <div class="modal" id="overlayModal" aria-hidden="true">
+    <div class="modal-card">
+      <h3>Create Overlay</h3>
+      <form id="createOverlayForm">
+        <input type="text" id="overlayName" placeholder="Overlay name" required />
+        <textarea id="overlayDescription" rows="2" placeholder="Optional description"></textarea>
+        <textarea id="overlayCells" rows="4" placeholder="Comma-separated labels"></textarea>
+        <div class="modal-actions">
+          <button type="button" class="modal-close" id="modalCancel">Cancel</button>
+          <button type="submit" class="action-button">Create overlay</button>
         </div>
-        <div class="grid-wrapper">
-          <div id="gridMount" class="grid-root"></div>
-        </div>
-      </section>
+      </form>
     </div>
   </div>
 
@@ -424,13 +499,24 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
 #595959\t#000000\t#000000\t#595959\t#595959\t#595959\t#595959\t#595959\t#000000\t#000000\t#595959\t#000000\t#000000`;
 
       const STORAGE_KEY = 'argos:state';
+      const menuToggle = document.getElementById('menuToggle');
+      const overlayDrawer = document.getElementById('overlayDrawer');
       const gridMount = document.getElementById('gridMount');
+      const gridWrapper = document.getElementById('gridWrapper');
       const overlayList = document.getElementById('overlayList');
       const hideAllButton = document.getElementById('hideAllButton');
       const overlaySearch = document.getElementById('overlaySearch');
       const themeToggle = document.getElementById('themeToggle');
       const modeToggle = document.getElementById('modeToggle');
-      const modeIndicator = document.querySelector('[data-mode-indicator]');
+      const viewerPanel = document.querySelector('[data-mode-panel="viewer"]');
+      const editorPanel = document.querySelector('[data-mode-panel="editor"]');
+      const createCustomOverlay = document.getElementById('createCustomOverlay');
+      const overlayModal = document.getElementById('overlayModal');
+      const modalCancel = document.getElementById('modalCancel');
+      const overlayForm = document.getElementById('createOverlayForm');
+      const overlayNameInput = document.getElementById('overlayName');
+      const overlayDescriptionInput = document.getElementById('overlayDescription');
+      const overlayCellsInput = document.getElementById('overlayCells');
       const importInput = document.getElementById('importInput');
       const importButton = document.getElementById('importButton');
       const exportButton = document.getElementById('exportButton');
@@ -440,12 +526,14 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         overlays: [],
         layerOrder: [],
         mode: 'viewer',
-        theme: 'dark',
+        theme: 'light',
         hideAllOverlays: false,
         searchTerm: ''
       };
 
+      let colorMatrix = [];
       let gridData;
+      let labelLookup = new Map();
       const state = loadState();
 
       function parseLabels() {
@@ -454,8 +542,8 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         const domains = rows.slice(1).map(row => ({
           domain: row[0].trim(),
           cells: row.slice(1).map(cell => {
-            const trimmed = cell.trim();
-            return trimmed === '<EMPTY>' ? '' : trimmed;
+            const text = cell.trim();
+            return text === '<EMPTY>' ? '' : text;
           })
         }));
         return { headers, domains };
@@ -465,19 +553,32 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         return colorCSV.trim().split('\n').map(line => line.split(/\s+/).filter(Boolean));
       }
 
-      function buildGrid() {
+      function buildGridData() {
         const labels = parseLabels();
-        const colors = parseColors();
+        colorMatrix = parseColors();
         const rows = labels.domains.map((row, rowIndex) => ({
           domain: row.domain,
           cells: row.cells.map((label, colIndex) => ({
             label,
-            color: (colors[rowIndex] && colors[rowIndex][colIndex]) || '#000000',
+            color: (colorMatrix[rowIndex + 1] && colorMatrix[rowIndex + 1][colIndex]) || '#000',
             rowIndex,
             colIndex
           }))
         }));
-        return { headers: labels.headers, rows };
+        gridData = { headers: labels.headers, rows };
+        buildLookup();
+      }
+
+      function buildLookup() {
+        labelLookup.clear();
+        gridData.rows.forEach(row => {
+          row.cells.forEach(cell => {
+            if (!cell.label) return;
+            const key = cell.label.toLowerCase();
+            if (!labelLookup.has(key)) labelLookup.set(key, []);
+            labelLookup.get(key).push({ rowIndex: cell.rowIndex, colIndex: cell.colIndex });
+          });
+        });
       }
 
       function loadState() {
@@ -502,14 +603,11 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
       function ensureDefaultOverlay() {
         if (!state.overlays.length) {
           const cells = [];
-          gridData.rows.forEach((row, rowIndex) => {
-            row.cells.forEach((cell, colIndex) => {
-              if (cell.label) {
-                cells.push({ rowIndex, colIndex });
-              }
+          gridData.rows.forEach(row => {
+            row.cells.forEach(cell => {
+              if (cell.label) cells.push({ rowIndex: cell.rowIndex, colIndex: cell.colIndex });
             });
           });
-
           const defaultOverlay = {
             id: 'default-uaf-view',
             name: 'UAF Standard View',
@@ -518,10 +616,8 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             cells,
             metadata: { base: true }
           };
-
           state.overlays.push(defaultOverlay);
         }
-
         if (!state.layerOrder.length) {
           state.layerOrder = state.overlays.map(overlay => overlay.id);
         }
@@ -532,130 +628,115 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         td.dataset.row = cell.rowIndex;
         td.dataset.col = cell.colIndex;
         td.dataset.label = cell.label;
-        td.style.background = cell.color || '#000';
+        td.style.background = cell.color;
 
-        const cellContent = document.createElement('div');
-        cellContent.className = 'cell-content';
-
+        const content = document.createElement('div');
+        content.className = 'cell-content';
         const label = document.createElement('span');
         label.className = 'cell-label';
         label.textContent = cell.label;
-
-        cellContent.appendChild(label);
-        td.appendChild(cellContent);
+        content.appendChild(label);
+        td.appendChild(content);
         return td;
       }
 
       function renderGrid() {
         gridMount.innerHTML = '';
-        const table = document.createElement('table');
-        table.className = 'uaf-grid';
+        const table = gridMount;
         const thead = document.createElement('thead');
         const headRow = document.createElement('tr');
         const corner = document.createElement('th');
         corner.className = 'domain-label';
         corner.textContent = '';
         headRow.appendChild(corner);
+        const headerColors = colorMatrix[0] || [];
 
-        gridData.headers.forEach(header => {
+        gridData.headers.forEach((header, index) => {
           const th = document.createElement('th');
           th.textContent = header;
+          const axisColor = headerColors[index];
+          if (axisColor) {
+            th.style.background = axisColor;
+            th.style.color = axisColor.toUpperCase() === '#FFFFFF' ? '#1f2530' : '#fff';
+          }
           headRow.appendChild(th);
         });
-
         thead.appendChild(headRow);
         table.appendChild(thead);
 
         const tbody = document.createElement('tbody');
-        gridData.rows.forEach(row => {
+        gridData.rows.forEach((row, rowIndex) => {
           const tr = document.createElement('tr');
           const domainCell = document.createElement('th');
           domainCell.textContent = row.domain;
           domainCell.className = 'domain-label';
+          const domainColor = colorMatrix[rowIndex + 1] && colorMatrix[rowIndex + 1][0];
+          if (domainColor) {
+            domainCell.style.background = domainColor;
+            domainCell.style.color = domainColor.toUpperCase() === '#FFFFFF' ? '#1f2530' : '#fff';
+          }
           tr.appendChild(domainCell);
-
-          row.cells.forEach(cell => {
-            tr.appendChild(createCellNode(cell));
-          });
-
+          row.cells.forEach(cell => tr.appendChild(createCellNode(cell)));
           tbody.appendChild(tr);
         });
-
         table.appendChild(tbody);
-        gridMount.appendChild(table);
         updateLabelVisibility();
       }
 
       function updateLabelVisibility() {
-        const table = gridMount.querySelector('table');
-        if (!table) return;
-        if (state.hideAllOverlays) {
-          table.classList.add('hide-labels');
-          hideAllButton.textContent = 'Show Grid Labels';
-        } else {
-          table.classList.remove('hide-labels');
-          hideAllButton.textContent = 'Hide Grid Labels';
-        }
+        gridWrapper.classList.toggle('hide-labels', state.hideAllOverlays);
+        hideAllButton.textContent = state.hideAllOverlays ? 'Show Labels' : 'Hide Labels';
         saveState();
       }
 
       function renderOverlayList() {
         overlayList.innerHTML = '';
         const query = (state.searchTerm || '').toLowerCase();
-        const orderedOverlays = state.layerOrder
+        const ordered = state.layerOrder
           .map(id => state.overlays.find(overlay => overlay.id === id))
           .filter(Boolean);
-
-        const filtered = orderedOverlays.filter(overlay => {
-          const haystack = `${overlay.name} ${overlay.description}`.toLowerCase();
-          return haystack.includes(query);
-        });
-
+        const filtered = ordered.filter(overlay => `${overlay.name} ${overlay.description || ''}`.toLowerCase().includes(query));
         if (!filtered.length) {
-          const emptyState = document.createElement('p');
-          emptyState.className = 'helper-text';
-          emptyState.textContent = 'No overlays match your search. Create one in Editor mode.';
-          overlayList.appendChild(emptyState);
+          const empty = document.createElement('p');
+          empty.textContent = 'No overlays match search. Create one in Editor mode.';
+          empty.className = 'helper-text';
+          overlayList.appendChild(empty);
           return;
         }
-
         filtered.forEach(overlay => {
           const card = document.createElement('article');
           card.className = 'overlay-card';
-
           const title = document.createElement('strong');
           title.textContent = overlay.name;
-
           const description = document.createElement('p');
-          description.textContent = overlay.description || 'No description provided.';
-
+          description.textContent = overlay.description || 'No description yet.';
           const metadata = document.createElement('small');
           metadata.textContent = `${overlay.cells?.length || 0} viewpoints · ${overlay.visible ? 'Visible' : 'Hidden'}`;
-
           const toggle = document.createElement('button');
           toggle.textContent = overlay.visible ? 'Hide layer' : 'Show layer';
           toggle.addEventListener('click', () => {
             overlay.visible = !overlay.visible;
             saveState();
             renderOverlayList();
-            updateLabelVisibility();
           });
-
           card.append(title, description, metadata, toggle);
           overlayList.appendChild(card);
         });
       }
 
-      function applyTheme() {
-        document.body.classList.toggle('theme-light', state.theme === 'light');
-        document.body.classList.toggle('theme-dark', state.theme === 'dark');
-        themeToggle.textContent = state.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+      function swapMode() {
+        state.mode = state.mode === 'viewer' ? 'editor' : 'viewer';
+        viewerPanel.style.display = state.mode === 'viewer' ? 'block' : 'none';
+        if (state.mode === 'editor') editorPanel.classList.add('active'); else editorPanel.classList.remove('active');
+        modeToggle.textContent = state.mode === 'viewer' ? 'Viewer Mode' : 'Editor Mode';
+        saveState();
       }
 
-      function updateModeIndicator() {
-        document.body.dataset.mode = state.mode;
-        modeIndicator.textContent = state.mode === 'viewer' ? 'Viewer Mode' : 'Editor Mode';
-        modeToggle.textContent = state.mode === 'viewer' ? 'Switch to Editor Mode' : 'Switch to Viewer Mode';
+      function toggleTheme() {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        document.body.classList.toggle('theme-dark', state.theme === 'dark');
+        document.body.classList.toggle('theme-light', state.theme === 'light');
+        themeToggle.textContent = state.theme === 'dark' ? 'Light Theme' : 'Dark Theme';
         saveState();
       }
 
@@ -665,90 +746,126 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = 'argos-overlays.json';
+        anchor.download = 'argos-state.json';
         document.body.appendChild(anchor);
         anchor.click();
         document.body.removeChild(anchor);
         URL.revokeObjectURL(url);
       }
 
-      function showImportPrompt() {
-        importInput.value = '';
-        importInput.click();
+      function showModal() {
+        overlayModal.classList.add('visible');
+        overlayModal.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeModal() {
+        overlayModal.classList.remove('visible');
+        overlayModal.setAttribute('aria-hidden', 'true');
+      }
+
+      function createOverlayFromForm(event) {
+        event.preventDefault();
+        const name = overlayNameInput.value.trim();
+        if (!name) return;
+        const description = overlayDescriptionInput.value.trim();
+        const cellText = overlayCellsInput.value.trim();
+        const labels = cellText
+          .split(/[,\n;]+/)
+          .map(part => part.trim())
+          .filter(Boolean);
+        const cells = [];
+        labels.forEach(label => {
+          const matches = labelLookup.get(label.toLowerCase());
+          if (matches?.length) {
+            cells.push(matches[0]);
+          }
+        });
+        const overlay = {
+          id: `custom-${Date.now()}`,
+          name,
+          description,
+          visible: true,
+          cells,
+          metadata: { createdAt: new Date().toISOString() }
+        };
+        state.overlays.unshift(overlay);
+        state.layerOrder.unshift(overlay.id);
+        saveState();
+        renderOverlayList();
+        overlayForm.reset();
+        closeModal();
       }
 
       function handleImport(event) {
         const file = event.target.files?.[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = () => {
           try {
             const parsed = JSON.parse(reader.result);
-            if (!parsed || !Array.isArray(parsed.overlays)) {
-              throw new Error('Not a valid Argos state');
-            }
+            if (!parsed || !Array.isArray(parsed.overlays)) throw new Error('Invalid Argos state');
             state.overlays = parsed.overlays;
             state.layerOrder = parsed.layerOrder || state.overlays.map(o => o.id);
             state.mode = parsed.mode || state.mode;
             state.theme = parsed.theme || state.theme;
             state.hideAllOverlays = !!parsed.hideAllOverlays;
             state.searchTerm = parsed.searchTerm || '';
-            saveState();
             overlaySearch.value = state.searchTerm;
+            saveState();
             renderOverlayList();
-            applyTheme();
-            updateModeIndicator();
           } catch (error) {
-            alert(`Failed to import overlays: ${error.message || 'Invalid file'}`);
+            alert(error.message);
           }
         };
         reader.readAsText(file);
       }
 
       function clearStorage() {
-        if (confirm('Clear all saved overlays and settings? This cannot be undone.')) {
+        if (confirm('Clear all overlays and settings?')) {
           localStorage.removeItem(STORAGE_KEY);
           location.reload();
         }
       }
 
-      function toggleHideAll() {
+      function init() {
+        buildGridData();
+        ensureDefaultOverlay();
+        saveState();
+        renderGrid();
+        renderOverlayList();
+        viewerPanel.style.display = 'block';
+        editorPanel.classList.remove('active');
+        document.body.classList.toggle('theme-dark', state.theme === 'dark');
+        document.body.classList.toggle('theme-light', state.theme === 'light');
+        if (state.mode === 'editor') swapMode();
+      }
+
+      menuToggle.addEventListener('click', () => {
+        document.body.classList.toggle('menu-open');
+      });
+
+      hideAllButton.addEventListener('click', () => {
         state.hideAllOverlays = !state.hideAllOverlays;
         updateLabelVisibility();
-      }
+      });
 
-      function switchMode() {
-        state.mode = state.mode === 'viewer' ? 'editor' : 'viewer';
-        updateModeIndicator();
-      }
-
-      gridData = buildGrid();
-      ensureDefaultOverlay();
-      saveState();
-
-      renderGrid();
-      overlaySearch.value = state.searchTerm;
-      renderOverlayList();
-      applyTheme();
-      updateModeIndicator();
-
-      hideAllButton.addEventListener('click', toggleHideAll);
       overlaySearch.addEventListener('input', event => {
         state.searchTerm = event.target.value;
         saveState();
         renderOverlayList();
       });
-      themeToggle.addEventListener('click', () => {
-        state.theme = state.theme === 'dark' ? 'light' : 'dark';
-        applyTheme();
-        saveState();
-      });
-      modeToggle.addEventListener('click', switchMode);
-      importButton.addEventListener('click', showImportPrompt);
+
+      themeToggle.addEventListener('click', toggleTheme);
+      modeToggle.addEventListener('click', swapMode);
+      createCustomOverlay.addEventListener('click', showModal);
+      modalCancel.addEventListener('click', closeModal);
+      overlayForm.addEventListener('submit', createOverlayFromForm);
       exportButton.addEventListener('click', exportState);
+      importButton.addEventListener('click', () => importInput.click());
       importInput.addEventListener('change', handleImport);
       clearStorageButton.addEventListener('click', clearStorage);
+
+      init();
     })();
   </script>
 </body>
