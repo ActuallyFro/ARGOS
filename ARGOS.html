@@ -3,27 +3,753 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ARGOS — Hello World</title>
+  <title>Argos — Architecture Repository for Governance &amp; Operational Standards</title>
   <style>
-    :root{--bg:#0b1220;--fg:#e6eef8;--accent:#06f}
-    html,body{height:100%;margin:0}
-    body{display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--bg),#083b60);color:var(--fg);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    .card{padding:2rem 2.5rem;background:rgba(255,255,255,0.03);border-radius:12px;text-align:center;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
-    button{margin-top:1rem;padding:.5rem 1rem;border:0;border-radius:6px;background:var(--accent);color:white;cursor:pointer}
+    :root {
+      --bg-dark:#04070f;
+      --bg-panel:#0b1220;
+      --bg-light:#f8fafc;
+      --text-light:#eef2ff;
+      --text-muted:#96a0b8;
+      --brand:#55f0d7;
+      --border:#1f2a3d;
+      --panel-shadow:0 20px 45px rgba(5, 11, 22, 0.65);
+    }
+
+    * { box-sizing:border-box; }
+
+    body {
+      margin:0;
+      min-height:100vh;
+      font-family:"Space Grotesk", "Inter", system-ui, sans-serif;
+      background:var(--bg-dark);
+      color:var(--text-light);
+      transition:background 0.3s ease, color 0.3s ease;
+    }
+
+    body.theme-light {
+      background:#f4f5fa;
+      color:#1f2530;
+    }
+
+    .app-shell {
+      max-width:1200px;
+      margin:0 auto;
+      padding:1.5rem;
+      display:flex;
+      flex-direction:column;
+      gap:1.5rem;
+    }
+
+    .app-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0.4rem 0;
+    }
+
+    .hamburger {
+      border:0;
+      background:transparent;
+      width:46px;
+      height:46px;
+      border-radius:12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:6px;
+      padding:0;
+      cursor:pointer;
+      position:relative;
+    }
+
+    .hamburger span {
+      display:block;
+      height:3px;
+      background:var(--brand);
+      border-radius:999px;
+    }
+
+    .brand {
+      flex:1;
+      padding-left:1rem;
+    }
+
+    .brand-mark {
+      font-size:1.25rem;
+      font-weight:600;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      display:block;
+      color:var(--brand);
+      margin-bottom:0.25rem;
+    }
+
+    .brand p {
+      margin:0;
+      color:var(--text-muted);
+      font-size:0.85rem;
+    }
+
+    .header-actions {
+      display:flex;
+      gap:0.75rem;
+    }
+
+    .header-actions button,
+    .panel-controls button,
+    .panel-actions button,
+    .toolbar-actions button {
+      border:0;
+      border-radius:999px;
+      padding:0.55rem 1rem;
+      font-size:0.85rem;
+      font-weight:600;
+      cursor:pointer;
+      background:linear-gradient(135deg,var(--brand),#2f92ff);
+      color:#03060f;
+      transition:transform 0.2s ease;
+    }
+
+    button:active { transform:scale(0.98); }
+
+    .layout {
+      background:var(--panel);
+      border-radius:20px;
+      padding:1.25rem;
+      box-shadow:var(--panel-shadow);
+      border:1px solid rgba(255,255,255,0.05);
+      display:grid;
+      grid-template-columns:minmax(240px,280px) minmax(0,1fr);
+      gap:1.25rem;
+    }
+
+    body.theme-light .layout {
+      background:#fff;
+      border-color:#e3e9f5;
+      box-shadow:0 20px 45px rgba(15,23,42,0.15);
+    }
+
+    .panel {
+      background:rgba(255,255,255,0.02);
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,0.05);
+      padding:1.1rem;
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+      min-height:360px;
+    }
+
+    body.theme-light .panel {
+      background:#f6f7fb;
+      border-color:#dbe2ef;
+    }
+
+    .panel-header h2 {
+      margin:0;
+      font-size:1.1rem;
+      letter-spacing:0.02em;
+    }
+
+    .helper-text {
+      margin:0.25rem 0 0;
+      color:var(--text-muted);
+      font-size:0.82rem;
+    }
+
+    .panel-controls {
+      display:flex;
+      flex-direction:column;
+      gap:0.75rem;
+    }
+
+    #overlaySearch {
+      width:100%;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.03);
+      padding:0.55rem 1rem;
+      font-size:0.9rem;
+      color:inherit;
+    }
+
+    .overlay-list {
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:0.9rem;
+      padding-right:0.25rem;
+      overflow-y:auto;
+    }
+
+    .overlay-card {
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:12px;
+      padding:0.85rem;
+      display:flex;
+      flex-direction:column;
+      gap:0.3rem;
+      background:rgba(255,255,255,0.01);
+    }
+
+    body.theme-light .overlay-card {
+      border-color:#e0e4f0;
+      background:#fff;
+    }
+
+    .overlay-card strong {
+      font-size:0.95rem;
+    }
+
+    .overlay-card p {
+      margin:0;
+      font-size:0.8rem;
+      color:var(--text-muted);
+    }
+
+    .overlay-card small {
+      color:var(--brand);
+    }
+
+    .grid-section {
+      background:rgba(255,255,255,0.02);
+      border-radius:16px;
+      padding:1.1rem;
+      display:flex;
+      flex-direction:column;
+      gap:1rem;
+    }
+
+    body.theme-light .grid-section {
+      background:#fff;
+    }
+
+    .grid-toolbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1rem;
+      font-size:0.9rem;
+      color:var(--text-muted);
+    }
+
+    .grid-toolbar strong {
+      color:var(--text-light);
+    }
+
+    .toolbar-actions {
+      display:flex;
+      gap:0.75rem;
+    }
+
+    .grid-wrapper {
+      overflow:auto;
+      border-radius:14px;
+      background:linear-gradient(180deg,rgba(3,6,12,0.7),rgba(5,10,20,0.95));
+      padding:0.5rem;
+    }
+
+    .uaf-grid {
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    .uaf-grid th,
+    .uaf-grid td {
+      border:1px solid rgba(255,255,255,0.08);
+      min-width:140px;
+      height:100px;
+      vertical-align:top;
+      padding:0.5rem;
+      font-size:0.8rem;
+      line-height:1.2;
+      color:#fff;
+      position:relative;
+      overflow:hidden;
+    }
+
+    body.theme-light .uaf-grid th,
+    body.theme-light .uaf-grid td {
+      color:#1f2530;
+    }
+
+    .uaf-grid th {
+      background:rgba(255,255,255,0.03);
+      font-size:0.75rem;
+      text-transform:uppercase;
+      letter-spacing:0.1em;
+    }
+
+    .domain-label {
+      background:rgba(255,255,255,0.07);
+      min-width:200px;
+      font-weight:600;
+    }
+
+    .cell-content {
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      flex-direction:column;
+      gap:0.35rem;
+      padding-top:0.2rem;
+    }
+
+    .cell-label {
+      font-size:0.75rem;
+      text-transform:none;
+      line-height:1.3;
+    }
+
+    .uaf-grid.hide-labels .cell-label {
+      opacity:0;
+    }
+
+    @media (max-width:960px) {
+      .layout {
+        grid-template-columns:1fr;
+      }
+
+      .uaf-grid th,
+      .uaf-grid td {
+        min-width:110px;
+        height:80px;
+        font-size:0.7rem;
+      }
+    }
+
+    @media (max-width:640px) {
+      .layout {
+        padding:0.75rem;
+      }
+
+      .app-shell {
+        padding:1rem;
+      }
+
+      .panel,
+      .grid-section {
+        padding:0.9rem;
+      }
+
+      .header-actions {
+        flex-direction:column;
+      }
+    }
   </style>
 </head>
-<body>
-  <main class="card" role="main">
-    <h1>Hello, World!</h1>
-    <p>Welcome to ARGOS.html — your starting point.</p>
-    <button id="sayHello">Say Hello</button>
-  </main>
+<body class="theme-dark" data-mode="viewer">
+  <div class="app-shell">
+    <header class="app-header">
+      <button class="hamburger" aria-label="Open main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="brand">
+        <span class="brand-mark">Argos</span>
+        <p>Architecture Repository for Governance &amp; Operational Standards</p>
+      </div>
+      <div class="header-actions">
+        <button id="modeToggle">Switch to Editor Mode</button>
+        <button id="themeToggle">Switch to Light Mode</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="panel">
+        <div class="panel-header">
+          <h2>Overlays</h2>
+          <p class="helper-text">Toggle visibility, merge order, and search by name or description.</p>
+        </div>
+        <div class="panel-actions" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <button id="importButton">Import Overlays</button>
+          <button id="exportButton">Export State</button>
+          <button id="clearStorage">Clear Storage</button>
+          <input type="file" accept="application/json" id="importInput" style="display:none" />
+        </div>
+        <div class="panel-controls">
+          <button id="hideAllButton">Hide Grid Labels</button>
+          <input type="search" id="overlaySearch" placeholder="Search overlays" />
+        </div>
+        <div class="overlay-list" id="overlayList" aria-live="polite"></div>
+      </aside>
+
+      <section class="grid-section">
+        <div class="grid-toolbar">
+          <div>
+            <strong data-mode-indicator>Viewer Mode</strong>
+            <span>Use overlays to highlight viewpoints or compare frameworks.</span>
+          </div>
+          <div class="toolbar-actions">
+            <button id="hideAllButtonDuplicate" aria-hidden="true" disabled>Layer Merge Preview</button>
+          </div>
+        </div>
+        <div class="grid-wrapper">
+          <div id="gridMount" class="grid-root"></div>
+        </div>
+      </section>
+    </div>
+  </div>
 
   <script>
-    document.getElementById('sayHello').addEventListener('click', () => {
-      alert('Hello, World!');
-      console.log('Hello, World!');
-    });
+    (() => {
+      const labelCSV = `Domain (Y-Axis)\\Model Kinds (X-Axis),Motivation (Mv),Taxonomy (Tx),Structure (Sr),Connectivity (Cn),Processes (Pr),States (St),Sequences (Sq),Information (If),Parameters (Pm),Constraints (Ct),Roadmap (Rm),Traceability (Tr)
+Architecture Management (Am),Architecture Principles (Am-Mv),Architecture Extensions (Am-Tx),Architecture Views (Am-Sr),Architecture References (Am-Cn),Architecture Development Method (Am-Pr),Architecture Status (Am-St),<EMPTY>,Dictionary (Am-If),Architecture Parameters (Am-Pm),Architecture Constraints (Am-Ct),Architecture Roadmap (Am-Rm),Architecture Traceability (Am-Tr)
+Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov)
+Strategic (St),Strategic Motivation (St-Mv),Strategic Taxonomy (St-Tx),Strategic Structure (St-Sr),Strategic Connectivity (St-Cn),Strategic Processes (St-Pr),Strategic States (St-St),<EMPTY>,Strategic Information (St-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Strategic Constraints (St-Ct),Strategic Deployment / Strategic Phasing (St-Rm-D / St-Rm-P),Strategic Traceability (St-Tr)
+Operational (Op),Requirements (Rq-Mv),Operational Taxonomy (Op-Tx),Operational Structure (Op-Sr),Operational Connectivity (Op-Cn),Operational Processes (Op-Pr),Operational States (Op-St),Operational Sequences (Op-Sq),Operational Information (Op-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Operational Constraints (Op-Ct),<EMPTY>,Operational Traceability (Op-Tr)
+Services  (Sv),Requirements (Rq-Mv),Services Taxonomy (Sv-Tx),Services Structure (Sv-Sr),Services Connectivity (Sv-Cn),Services Processes (Sv-Pr),Services States (Sv-St),Services Sequences (Sv-Sq),Operational Information (Op-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Services Constraints (Sv-Ct),Services Roadmap (Sv-Rm),Services Traceability (Sv-Tr)
+Personnel (Ps),Requirements (Rq-Mv),Personnel Taxonomy (Ps-Tx),Personnel Structure (Ps-Sr),Personnel Connectivity (Ps-Cn),Personnel Processes (Ps-Pr),Personnel States (Ps-St),Personnel Sequences (Ps-Sq),Resources Information (Rs-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Competence / Drivers / Performance (Ps-Ct),Personnel Availability / Personnel Evolution / Personnel Forecast (Ps-Rm-A / Ps-Rm-E / Ps-Rm-F),Personnel Traceability (Ps-Tr)
+Resources (Rs),Requirements (Rq-Mv),Resources Taxonomy (Rs-Tx),Resources Structure (Rs-Sr),Resources Connectivity (Rs-Cn),Resources Processes (Rs-Pr),Resources States (Rs-St),Resources Sequences (Rs-Sq),Resources Information (Rs-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Resources Constraints (Rs-Ct),Resources Evolution / Forecast (Rs-Rm-E / Rs-Rm-F),Resources Traceability (Rs-Tr)
+Security (Sc),Security Controls (Sc-Mv),Security Taxonomy (Sc-Tx),Security Structure (Sc-Sr),Security Connectivity (Sc-Cn),Security Processes (Sc-Pr),<EMPTY>,<EMPTY>,Resources Information (Rs-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Security Constraints (Sc-Ct),<EMPTY>,Security Traceability (Sc-Tr)
+Projects (Pj),<EMPTY>,Projects Taxonomy (Pj-Tx),Projects Structure (Pj-Sr),Projects Connectivity (Pj-Cn),Projects Processes (Pj-Pr),<EMPTY>,<EMPTY>,<EMPTY>,Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),<EMPTY>,Projects Roadmap (Pj-Rm),Projects Traceability (Pj-Tr)
+Standards (Sd),<EMPTY>,Standards Taxonomy (Sd-Tx),Standards Structure (Sd-Sr),<EMPTY>,<EMPTY>,<EMPTY>,<EMPTY>,<EMPTY>,<EMPTY>,<EMPTY>,Standards Roadmap (Sd-Rm),Standards Traceability (Sd-Tr)
+Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual Resources Connectivity (Ar-Cn),Simulation,Simulation,Simulation,<EMPTY>,<EMPTY>,Parametric Execution/Evaluation,<EMPTY>,<EMPTY>`;
+
+      const colorCSV = `#FFFFFF\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000
+#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#000000\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC
+#595959\t#595959\t#595959\t#595959\t#595959\t#595959\t#595959\t#595959\t#595959\t#0070C0\t#595959\t#595959\t#595959
+#D7E4BD\t#D7E4BD\t#D7E4BD\t#D7E4BD\t#D7E4BD\t#D7E4BD\t#D7E4BD\t#000000\t#D7E4BD\t#0070C0\t#D7E4BD\t#D7E4BD\t#D7E4BD
+#8EB4E3\t#7F7F7F\t#8EB4E3\t#8EB4E3\t#8EB4E3\t#8EB4E3\t#8EB4E3\t#8EB4E3\t#BFBFBF\t#0070C0\t#8EB4E3\t#000000\t#8EB4E3
+#E6B9B8\t#7F7F7F\t#E6B9B8\t#E6B9B8\t#E6B9B8\t#E6B9B8\t#E6B9B8\t#E6B9B8\t#BFBFBF\t#0070C0\t#E6B9B8\t#E6B9B8\t#E6B9B8
+#FFFFFF\t#7F7F7F\t#FFFFFF\t#FFFFFF\t#FFFFFF\t#FFFFFF\t#FFFFFF\t#FFFFFF\t#BFBFBF\t#0070C0\t#FFFFFF\t#FFFFFF\t#FFFFFF
+#FCD5B5\t#7F7F7F\t#FCD5B5\t#FCD5B5\t#FCD5B5\t#FCD5B5\t#FCD5B5\t#FCD5B5\t#BFBFBF\t#0070C0\t#FCD5B5\t#FCD5B5\t#FCD5B5
+#B7DEE8\t#B7DEE8\t#B7DEE8\t#B7DEE8\t#B7DEE8\t#B7DEE8\t#000000\t#000000\t#BFBFBF\t#0070C0\t#B7DEE8\t#000000\t#B7DEE8
+#CCC1DA\t#000000\t#CCC1DA\t#CCC1DA\t#CCC1DA\t#CCC1DA\t#000000\t#000000\t#000000\t#0070C0\t#000000\t#CCC1DA\t#CCC1DA
+#C4BD97\t#000000\t#C4BD97\t#C4BD97\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#C4BD97\t#C4BD97
+#595959\t#000000\t#000000\t#595959\t#595959\t#595959\t#595959\t#595959\t#000000\t#000000\t#595959\t#000000\t#000000`;
+
+      const STORAGE_KEY = 'argos:state';
+      const gridMount = document.getElementById('gridMount');
+      const overlayList = document.getElementById('overlayList');
+      const hideAllButton = document.getElementById('hideAllButton');
+      const overlaySearch = document.getElementById('overlaySearch');
+      const themeToggle = document.getElementById('themeToggle');
+      const modeToggle = document.getElementById('modeToggle');
+      const modeIndicator = document.querySelector('[data-mode-indicator]');
+      const importInput = document.getElementById('importInput');
+      const importButton = document.getElementById('importButton');
+      const exportButton = document.getElementById('exportButton');
+      const clearStorageButton = document.getElementById('clearStorage');
+
+      const defaultState = {
+        overlays: [],
+        layerOrder: [],
+        mode: 'viewer',
+        theme: 'dark',
+        hideAllOverlays: false,
+        searchTerm: ''
+      };
+
+      let gridData;
+      const state = loadState();
+
+      function parseLabels() {
+        const rows = labelCSV.trim().split('\n').map(line => line.split(','));
+        const headers = rows[0].slice(1).map(cell => cell.trim());
+        const domains = rows.slice(1).map(row => ({
+          domain: row[0].trim(),
+          cells: row.slice(1).map(cell => {
+            const trimmed = cell.trim();
+            return trimmed === '<EMPTY>' ? '' : trimmed;
+          })
+        }));
+        return { headers, domains };
+      }
+
+      function parseColors() {
+        return colorCSV.trim().split('\n').map(line => line.split(/\s+/).filter(Boolean));
+      }
+
+      function buildGrid() {
+        const labels = parseLabels();
+        const colors = parseColors();
+        const rows = labels.domains.map((row, rowIndex) => ({
+          domain: row.domain,
+          cells: row.cells.map((label, colIndex) => ({
+            label,
+            color: (colors[rowIndex] && colors[rowIndex][colIndex]) || '#000000',
+            rowIndex,
+            colIndex
+          }))
+        }));
+        return { headers: labels.headers, rows };
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.overlays) {
+              return { ...defaultState, ...parsed };
+            }
+          }
+        } catch (error) {
+          console.warn('Unable to parse saved state', error);
+        }
+        return { ...defaultState };
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function ensureDefaultOverlay() {
+        if (!state.overlays.length) {
+          const cells = [];
+          gridData.rows.forEach((row, rowIndex) => {
+            row.cells.forEach((cell, colIndex) => {
+              if (cell.label) {
+                cells.push({ rowIndex, colIndex });
+              }
+            });
+          });
+
+          const defaultOverlay = {
+            id: 'default-uaf-view',
+            name: 'UAF Standard View',
+            description: 'All default viewpoints using the official grid data.',
+            visible: true,
+            cells,
+            metadata: { base: true }
+          };
+
+          state.overlays.push(defaultOverlay);
+        }
+
+        if (!state.layerOrder.length) {
+          state.layerOrder = state.overlays.map(overlay => overlay.id);
+        }
+      }
+
+      function createCellNode(cell) {
+        const td = document.createElement('td');
+        td.dataset.row = cell.rowIndex;
+        td.dataset.col = cell.colIndex;
+        td.dataset.label = cell.label;
+        td.style.background = cell.color || '#000';
+
+        const cellContent = document.createElement('div');
+        cellContent.className = 'cell-content';
+
+        const label = document.createElement('span');
+        label.className = 'cell-label';
+        label.textContent = cell.label;
+
+        cellContent.appendChild(label);
+        td.appendChild(cellContent);
+        return td;
+      }
+
+      function renderGrid() {
+        gridMount.innerHTML = '';
+        const table = document.createElement('table');
+        table.className = 'uaf-grid';
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        const corner = document.createElement('th');
+        corner.className = 'domain-label';
+        corner.textContent = '';
+        headRow.appendChild(corner);
+
+        gridData.headers.forEach(header => {
+          const th = document.createElement('th');
+          th.textContent = header;
+          headRow.appendChild(th);
+        });
+
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        gridData.rows.forEach(row => {
+          const tr = document.createElement('tr');
+          const domainCell = document.createElement('th');
+          domainCell.textContent = row.domain;
+          domainCell.className = 'domain-label';
+          tr.appendChild(domainCell);
+
+          row.cells.forEach(cell => {
+            tr.appendChild(createCellNode(cell));
+          });
+
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        gridMount.appendChild(table);
+        updateLabelVisibility();
+      }
+
+      function updateLabelVisibility() {
+        const table = gridMount.querySelector('table');
+        if (!table) return;
+        if (state.hideAllOverlays) {
+          table.classList.add('hide-labels');
+          hideAllButton.textContent = 'Show Grid Labels';
+        } else {
+          table.classList.remove('hide-labels');
+          hideAllButton.textContent = 'Hide Grid Labels';
+        }
+        saveState();
+      }
+
+      function renderOverlayList() {
+        overlayList.innerHTML = '';
+        const query = (state.searchTerm || '').toLowerCase();
+        const orderedOverlays = state.layerOrder
+          .map(id => state.overlays.find(overlay => overlay.id === id))
+          .filter(Boolean);
+
+        const filtered = orderedOverlays.filter(overlay => {
+          const haystack = `${overlay.name} ${overlay.description}`.toLowerCase();
+          return haystack.includes(query);
+        });
+
+        if (!filtered.length) {
+          const emptyState = document.createElement('p');
+          emptyState.className = 'helper-text';
+          emptyState.textContent = 'No overlays match your search. Create one in Editor mode.';
+          overlayList.appendChild(emptyState);
+          return;
+        }
+
+        filtered.forEach(overlay => {
+          const card = document.createElement('article');
+          card.className = 'overlay-card';
+
+          const title = document.createElement('strong');
+          title.textContent = overlay.name;
+
+          const description = document.createElement('p');
+          description.textContent = overlay.description || 'No description provided.';
+
+          const metadata = document.createElement('small');
+          metadata.textContent = `${overlay.cells?.length || 0} viewpoints · ${overlay.visible ? 'Visible' : 'Hidden'}`;
+
+          const toggle = document.createElement('button');
+          toggle.textContent = overlay.visible ? 'Hide layer' : 'Show layer';
+          toggle.addEventListener('click', () => {
+            overlay.visible = !overlay.visible;
+            saveState();
+            renderOverlayList();
+            updateLabelVisibility();
+          });
+
+          card.append(title, description, metadata, toggle);
+          overlayList.appendChild(card);
+        });
+      }
+
+      function applyTheme() {
+        document.body.classList.toggle('theme-light', state.theme === 'light');
+        document.body.classList.toggle('theme-dark', state.theme === 'dark');
+        themeToggle.textContent = state.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+      }
+
+      function updateModeIndicator() {
+        document.body.dataset.mode = state.mode;
+        modeIndicator.textContent = state.mode === 'viewer' ? 'Viewer Mode' : 'Editor Mode';
+        modeToggle.textContent = state.mode === 'viewer' ? 'Switch to Editor Mode' : 'Switch to Viewer Mode';
+        saveState();
+      }
+
+      function exportState() {
+        const payload = JSON.stringify(state, null, 2);
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'argos-overlays.json';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+      }
+
+      function showImportPrompt() {
+        importInput.value = '';
+        importInput.click();
+      }
+
+      function handleImport(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(reader.result);
+            if (!parsed || !Array.isArray(parsed.overlays)) {
+              throw new Error('Not a valid Argos state');
+            }
+            state.overlays = parsed.overlays;
+            state.layerOrder = parsed.layerOrder || state.overlays.map(o => o.id);
+            state.mode = parsed.mode || state.mode;
+            state.theme = parsed.theme || state.theme;
+            state.hideAllOverlays = !!parsed.hideAllOverlays;
+            state.searchTerm = parsed.searchTerm || '';
+            saveState();
+            overlaySearch.value = state.searchTerm;
+            renderOverlayList();
+            applyTheme();
+            updateModeIndicator();
+          } catch (error) {
+            alert(`Failed to import overlays: ${error.message || 'Invalid file'}`);
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function clearStorage() {
+        if (confirm('Clear all saved overlays and settings? This cannot be undone.')) {
+          localStorage.removeItem(STORAGE_KEY);
+          location.reload();
+        }
+      }
+
+      function toggleHideAll() {
+        state.hideAllOverlays = !state.hideAllOverlays;
+        updateLabelVisibility();
+      }
+
+      function switchMode() {
+        state.mode = state.mode === 'viewer' ? 'editor' : 'viewer';
+        updateModeIndicator();
+      }
+
+      gridData = buildGrid();
+      ensureDefaultOverlay();
+      saveState();
+
+      renderGrid();
+      overlaySearch.value = state.searchTerm;
+      renderOverlayList();
+      applyTheme();
+      updateModeIndicator();
+
+      hideAllButton.addEventListener('click', toggleHideAll);
+      overlaySearch.addEventListener('input', event => {
+        state.searchTerm = event.target.value;
+        saveState();
+        renderOverlayList();
+      });
+      themeToggle.addEventListener('click', () => {
+        state.theme = state.theme === 'dark' ? 'light' : 'dark';
+        applyTheme();
+        saveState();
+      });
+      modeToggle.addEventListener('click', switchMode);
+      importButton.addEventListener('click', showImportPrompt);
+      exportButton.addEventListener('click', exportState);
+      importInput.addEventListener('change', handleImport);
+      clearStorageButton.addEventListener('click', clearStorage);
+    })();
   </script>
 </body>
 </html>
