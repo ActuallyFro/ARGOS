@@ -15,10 +15,14 @@
             --text-sub: #6b7280;
             --primary: #4A90E2;
             --primary-fg: #ffffff;
+            --secondary: #F5A623; /* Orange for Editor */
+            --secondary-fg: #ffffff;
             --danger: #ef4444;
             --font-size: 14px;
             --grid-cell_bg: #ffffff;
             --grid-border: #e5e7eb;
+            --toast-bg: #333;
+            --toast-fg: #fff;
         }
 
         [data-theme="dark"] {
@@ -59,8 +63,28 @@
             z-index: 20;
         }
 
-        .brand { font-weight: 700; font-size: 1.1rem; color: var(--primary); letter-spacing: -0.02em; }
+        .brand { font-weight: 700; font-size: 2.2rem; color: var(--primary); letter-spacing: -0.02em; }
         .header-controls { display: flex; gap: 0.5rem; }
+        
+        /* Toggle Switch UI */
+        .toggle-container {
+            background: var(--bg);
+            padding: 3px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            display: flex;
+        }
+        .toggle-btn {
+            border: 0;
+            background: transparent;
+            border-radius: 3px;
+            padding: 4px 12px;
+            font-weight: 500;
+            color: var(--text-sub);
+            transition: all 0.2s;
+        }
+        .toggle-btn.active-blue { background: var(--primary); color: var(--primary-fg); }
+        .toggle-btn.active-orange { background: var(--secondary); color: var(--secondary-fg); }
 
         main {
             flex: 1;
@@ -107,9 +131,23 @@
         button:hover { background: var(--surface-hover); }
         button.primary { background: var(--primary); color: var(--primary-fg); border-color: transparent; }
         button.primary:hover { opacity: 0.9; }
+        button.secondary { background: var(--secondary); color: var(--secondary-fg); border-color: transparent; }
+        button.secondary:hover { opacity: 0.9; }
         button.danger { color: var(--danger); border-color: var(--border); }
         button.icon-btn { padding: 0.4rem;  }
+        button.close-btn { color: var(--danger); }
         
+        /* Settings Buttons in Light Mode need contrast */
+        [data-theme="light"] .panel-content button:not(.primary):not(.danger):not(.icon-btn) {
+            background: #f0f0f0;
+            border-color: #ccc;
+            color: #000;
+            font-weight: 500;
+        }
+        [data-theme="light"] .panel-content button:not(.primary):not(.danger):not(.icon-btn):hover {
+            background: #e0e0e0;
+        }
+
         input[type="text"], select {
             background: var(--bg);
             border: 1px solid var(--border);
@@ -202,11 +240,43 @@
         
         /* Interaction States */
         .mode-overlay td { cursor: pointer; }
-        .mode-overlay td:hover { background-color: rgba(74, 144, 226, 0.1) !important; }
+        /* Issue 5: Dark mode hover fix - use primary with low opacity (works on both) */
+        .mode-overlay td:hover { 
+            background-color: var(--primary) !important; 
+            opacity: 0.2;
+        }
         .cell-selected {
             outline: 3px solid var(--primary);
             outline-offset: -3px;
             z-index: 1;
+        }
+
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+        .toast {
+            background: var(--toast-bg);
+            color: var(--toast-fg);
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: fadeInOut 2.5s ease-in-out forwards;
+            opacity: 0;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
         }
 
         /* Layer List Item */
@@ -264,12 +334,19 @@
             border: 1px solid var(--border);
             padding: 1rem;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
             display: flex;
-            gap: 1rem;
-            align-items: center;
+            flex-direction: column; /* Multi-row layout */
+            gap: 0.8rem;
             z-index: 25;
-            min-width: 600px;
+            min-width: 700px;
+            font-size: 14px;
+            border-top: 4px solid var(--secondary);
+        }
+        [data-theme="light"] #editor-hud {
+            background: #ffffff;
+            border: 1px solid #ccc;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
         }
 
         /* Grouping controls */
@@ -288,12 +365,12 @@
 
     <!-- Header -->
     <header>
-        <div class="brand">ARGOS <span style="font-weight: 400; font-size: 0.8em; color: var(--text-sub);">UAF 1.3</span></div>
+        <div class="brand">ARGOS </div>
         <div class="header-controls">
             <!-- Mode Toggle -->
-             <div style="background: var(--bg); padding: 2px; border-radius: 4px; border: 1px solid var(--border); display: flex;">
-                 <button id="btn-mode-display" class="primary" style="border:0; border-radius: 2px;">Display</button>
-                 <button id="btn-mode-overlay" style="border:0; background: transparent; border-radius: 2px;">Editor</button>
+             <div class="toggle-container">
+                 <button id="btn-mode-display" class="toggle-btn active-blue">Display</button>
+                 <button id="btn-mode-overlay" class="toggle-btn">Editor</button>
              </div>
              
              <!-- Sidebar Toggle -->
@@ -314,26 +391,64 @@
             <table id="main-grid">
                 <!-- JS will populate -->
             </table>
+            
+            <!-- Download Actions -->
+            <div style="margin-top: 1rem; text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem; color: var(--text-sub);">
+                <span>Download Grid:</span>
+                <button id="btn-download-png" style="font-size: 0.8em;" class="icon-btn">PNG</button>
+                <button id="btn-download-svg" style="font-size: 0.8em;" class="icon-btn">SVG</button>
+            </div>
         </div>
 
         <!-- Editor HUD (Floating) -->
         <div id="editor-hud" class="hidden">
-            <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                <span style="font-weight: 700; font-size:0.9em;">Overlay Editor</span>
-                <span style="font-size:0.8em; color: var(--text-sub);">Selected: <span id="selection-count">0</span></span>
+            <!-- Row 1: Identification -->
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                 <label style="font-weight: 600; color: var(--text-sub); width: 60px;">Select:</label>
+                 <select id="sel-edit-overlay" style="flex: 1;">
+                    <option value="">Start New...</option>
+                    <!-- Options filled by JS -->
+                 </select>
+                 
+                 <div style="width: 1px; height: 20px; background: var(--border); margin: 0 0.5rem;"></div>
+                 
+                 <label for="inp-overlay-name" style="font-weight: 600; color: var(--text-sub);">Name:</label>
+                 <input type="text" id="inp-overlay-name" placeholder="Overlay Name..." style="flex: 2;">
             </div>
-            <div style="width: 1px; height: 30px; background: var(--border);"></div>
-            <div style="display:flex; gap: 0.5rem;">
-                <button id="btn-sel-all">Select All</button>
-                <button id="btn-sel-clear">Clear</button>
-                <button id="btn-sel-invert">Invert</button>
+            
+            <!-- Row 2: Selection Tools -->
+            <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: space-between; background: var(--surface-hover); padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border);">
+                <div style="display:flex; gap: 0.5rem; align-items: center;">
+                    <button id="btn-sel-all">Select All</button>
+                    <button id="btn-sel-clear">Clear</button>
+                    <button id="btn-sel-invert">Invert</button>
+                </div>
+                
+                <div style="display:flex; gap: 0.5rem; align-items: center;">
+                    <span class="badge" title="Selected Cells" style="font-size: 0.9em; padding: 6px 12px;">Count: <span id="selection-count">0</span></span>
+                    <input type="color" id="inp-sel-color" value="#4A90E2" title="Selection Color" style="height: 32px; width: 32px; padding: 0; background: none; border: 0;">
+                </div>
             </div>
-            <div style="width: 1px; height: 30px; background: var(--border);"></div>
-            <div style="display:flex; gap: 0.5rem; flex: 1;">
-                <input type="text" id="inp-overlay-name" placeholder="New Overlay Name...">
-                <button id="btn-save-overlay" class="primary">Save Overlay</button>
+            
+            <!-- Row 3: IO Actions -->
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button id="btn-save-overlay" class="secondary" style="flex: 1; justify-content: center; font-weight: bold;">Save Changes</button>
+                
+                <button id="btn-export-overlay" style="flex: 1;" title="Export this Overlay">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export
+                </button>
+                <button id="btn-import-overlay" style="flex: 1;" title="Import Overlay">
+                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                     Import
+                </button>
+                <input type="file" id="file-import-overlay" accept=".json" class="hidden">
             </div>
         </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container"></div>
+
 
         <!-- Sidebar (Layers) -->
         <aside id="sidebar-layers">
@@ -368,13 +483,13 @@
         <div id="settings-menu">
             <div class="panel-header">
                 <span>Settings</span>
-                <button id="btn-close-settings" class="icon-btn">✕</button>
+                <button id="btn-close-settings" class="icon-btn close-btn" title="Close">✕</button>
             </div>
             <div class="panel-content">
                 <div class="control-group">
                     <h4>Appearance</h4>
                     <div style="display:flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span>Theme</span>
+                        <span>Theme/Mode</span>
                         <button id="btn-theme-toggle">Switch to Dark</button>
                     </div>
                     <div style="display:flex; align-items: center; justify-content: space-between;">
@@ -384,6 +499,33 @@
                             <button id="btn-font-reset">R</button>
                             <button id="btn-font-inc">A+</button>
                         </div>
+                    </div>
+                    <!-- Issue 3: Subdued empty cells -->
+                    <div style="margin-top: 0.5rem;">
+                         <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                             <input type="checkbox" id="chk-subdue-empty">
+                             <span style="font-size: 0.9em;">Subdue Empty Cells</span>
+                         </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Alignment</h4>
+                    <div style="margin-bottom: 0.5rem;">
+                        <select id="sel-align-target">
+                            <option value="headers">Headers (Row/Col)</option>
+                            <option value="cells">Cells (Labels)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                         <button id="btn-align-left" style="flex:1;">Left</button>
+                         <button id="btn-align-center" style="flex:1;">Center</button>
+                         <button id="btn-align-right" style="flex:1;">Right</button>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                         <button id="btn-align-top" style="flex:1;">Top</button>
+                         <button id="btn-align-middle" style="flex:1;">Mid</button>
+                         <button id="btn-align-bottom" style="flex:1;">Bot</button>
                     </div>
                 </div>
 
@@ -398,9 +540,9 @@
                 <div class="control-group">
                     <h4>About</h4>
                     <p style="font-size: 0.8em; color: var(--text-sub); line-height: 1.4;">
-                        Argos v1.0.0<br>
-                        UAF 1.3 Visualizer<br>
-                        Single-file SPA
+                        Architecture Repository for Governance & Operational Standards <br><br>
+                        Argos v0.1.0<br><br>
+                        ARGOS is designed to support organizations in managing and governing their choices in architectural model views/viewpoints/etc.
                     </p>
                 </div>
             </div>
@@ -409,10 +551,6 @@
     </main>
 
     <script>
-        /**
-         * ARGOS v1.0.0 - UAF 1.3 Visualizer
-         */
-
         // --------------------------------------------------------------------
         // Constants & Config
         // --------------------------------------------------------------------
@@ -471,9 +609,16 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 layerOrder: [], // Array of string IDs
                 activeMode: 'display', // 'display' | 'overlay'
                 mergeMode: 'none',     // 'none' | 'add' | 'intersect'
-                isSidebarOpen: true
+                isSidebarOpen: true,
+                selectionColor: '#4A90E2',
+                subdueEmpty: false, // Issue 3
+                alignment: {
+                    headers: { h: 'center', v: 'middle' },
+                    cells: { h: 'left', v: 'top' }
+                }
             },
             // Runtime only
+            editingId: null, // ID of overlay currently being edited
             selection: [] // 2D array of 1/0
         };
 
@@ -487,11 +632,9 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             // Always rebuild model from CSVs to ensure latest data/logic (fixes header colors etc)
             parseAndBuildModel();
 
-            // Ensure Default UAF 1.3 Overlay exists
-            const hasDefault = state.overlays.some(o => o.name === 'UAF 1.3');
-            if (!hasDefault) {
-                createDefaultOverlay();
-            }
+            // NOTE: Default UAF 1.3 Overlay creation logic removed per user request.
+            // Only user-created overlays or imports will exist unless empty?
+            // "There was no overlay... remove all logic to make UAF 1.3 Overlay"
             
             // Validate selection buffer matches grid
             if (!state.selection || state.selection.length !== state.model.gridDimensions.rows) {
@@ -501,12 +644,21 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             // Apply settings
             applyTheme(state.settings.theme);
             applyFont(state.settings.fontSize);
+            if(state.settings.selectionColor) {
+                document.getElementById('inp-sel-color').value = state.settings.selectionColor;
+                document.documentElement.style.setProperty('--primary', state.settings.selectionColor);
+            }
+            // Issue 3
+            if(state.settings.subdueEmpty !== undefined) {
+                document.getElementById('chk-subdue-empty').checked = state.settings.subdueEmpty;
+            }
 
             // Render
             renderGridStructure();
             updateGridContent();
             renderLayerList();
             updateUIState();
+            populateOverlaySelect(); // New HUD dropdown
         }
 
         function parseAndBuildModel() {
@@ -548,33 +700,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         }
 
         function createDefaultOverlay() {
-            // UAF 1.3 Default: All cells that are NOT <EMPTY>
-            const rows = state.model.gridDimensions.rows;
-            const cols = state.model.gridDimensions.columns; // This is data col count
-            const cells = [];
-
-            for (let r = 0; r < rows; r++) {
-                const rowArr = [];
-                for (let c = 0; c < state.model.gridLabels[r].length; c++) {
-                    if (c === 0) { rowArr.push(0); continue; } // Y-Axis label col is never part of overlay
-                    const label = state.model.gridLabels[r][c];
-                    rowArr.push(label === '<EMPTY>' ? 0 : 1);
-                }
-                cells.push(rowArr);
-            }
-
-            const ov = {
-                id: crypto.randomUUID(),
-                name: 'UAF 1.3',
-                description: 'Default Complete Framework',
-                cells: cells,
-                visible: true,
-                created: new Date().toISOString()
-            };
-            
-            state.overlays.push(ov);
-            state.settings.layerOrder = [ov.id];
-            saveStorage();
+           // Deprecated/Removed per user request
         }
 
         function loadStorage() {
@@ -587,6 +713,10 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             if (s) {
                 const saved = JSON.parse(s);
                 state.settings = { ...state.settings, ...saved };
+                // Ensure alignment structure exists in old saves
+                if(!state.settings.alignment) {
+                     state.settings.alignment = { headers: { h: 'center', v: 'middle' }, cells: { h: 'left', v: 'top' } };
+                }
             }
         }
 
@@ -616,6 +746,17 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         // Rendering
         // --------------------------------------------------------------------
 
+        function getAlignStyle(type) {
+             const a = state.settings.alignment[type];
+             return `text-align: ${a.h}; vertical-align: ${a.v};`;
+        }
+        
+        function resolveColor(hex) {
+            // Issue 2: Fixed color rendering. User wants EXACT colors from CSV.
+            // Removed logic that nullified #000000/#FFFFFF
+            return hex || null;
+        }
+
         function renderGridStructure() {
             const table = document.getElementById('main-grid');
             table.innerHTML = '';
@@ -628,14 +769,20 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             const thCorner = document.createElement('th');
             trHead.appendChild(thCorner);
 
+            // Alignment styles
+            const headAlign = getAlignStyle('headers');
+            const cellAlign = getAlignStyle('cells');
+
             state.model.xLabels.forEach((label, idx) => {
                 const th = document.createElement('th');
                 th.innerHTML = label.replace(/\\/g, '<br>');
+                th.style.cssText += headAlign;
                 
                 // Header colors from model (parsed from row 0 of CSV)
-                const color = state.model.headerColors ? state.model.headerColors[idx] : null; 
+                const colorRaw = state.model.headerColors ? state.model.headerColors[idx] : null; 
+                const color = resolveColor(colorRaw);
                 
-                if(color && color !== '#FFFFFF' && color !== '#000000') {
+                if(color) {
                     th.style.backgroundColor = color;
                     th.style.color = getContrastYIQ(color);
                 }
@@ -654,8 +801,12 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 // Axis Label (Col 0)
                 const thRow = document.createElement('th');
                 thRow.textContent = row[0];
-                const axisColor = state.model.gridColors[rIdx][0];
-                 if(axisColor && axisColor !== '#FFFFFF' && axisColor !== '#000000') {
+                thRow.style.cssText += headAlign;
+                
+                const axisColorRaw = state.model.gridColors[rIdx][0];
+                const axisColor = resolveColor(axisColorRaw);
+                
+                 if(axisColor) {
                     thRow.style.backgroundColor = axisColor;
                      thRow.style.color = getContrastYIQ(axisColor);
                 }
@@ -666,6 +817,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                     const td = document.createElement('td');
                     td.dataset.r = rIdx;
                     td.dataset.c = cIdx;
+                    td.style.cssText += cellAlign; 
                     
                     const content = document.createElement('div');
                     content.className = 'cell-content';
@@ -707,17 +859,22 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                     const cell = table.rows[r+1].cells[c]; // +1 for thead
                     const contentDiv = cell.querySelector('.cell-content');
                     const label = state.model.gridLabels[r][c];
-                    const baseColor = state.model.gridColors[r][c];
+                    const baseColorRaw = state.model.gridColors[r][c];
+                    const baseColor = resolveColor(baseColorRaw);
                     
                     const isEmpty = label === '<EMPTY>';
                     
                     // Reset styles
-                    cell.style.backgroundColor = baseColor;
-                    contentDiv.style.color = getContrastYIQ(baseColor);
+                    // If baseColor is null (was white/black), it inherits table CSS (white/dark-grey)
+                    cell.style.backgroundColor = baseColor || ''; 
+                    contentDiv.style.color = baseColor ? getContrastYIQ(baseColor) : '';
+                    if(!baseColor) contentDiv.style.color = ''; // inherit CSS
+
                     cell.classList.remove('cell-selected');
 
                     // Editor Selection Highlight
-                    if (state.selection[r][c] === 1) {
+                    // BUG FIX #10: Only show selection in Overlay Mode
+                    if (mode === 'overlay' && state.selection[r][c] === 1) {
                         cell.classList.add('cell-selected');
                     }
 
@@ -725,8 +882,6 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                     if (mode === 'overlay') {
                         // Editor View: Show Grid + Labels + Selection
                         // Do NOT show merged Overlay data, just the base grid?
-                        // "When in overlay mode... intent is to allow toggling... grid never 'shrinks'..."
-                        // Usually Editor sees the base grid to select from.
                         contentDiv.textContent = isEmpty ? '' : label;
                     } 
                     else {
@@ -743,30 +898,12 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                             if (state.settings.mergeMode === 'none') {
                                 // Last one writes
                                 if (hits.length > 0) {
-                                    const winner = hits[hits.length - 1]; // Topmost is last in list visually? 
-                                    // "Up/Down buttons: reorder layers (affects z-index rendering)"
-                                    // Usually Top of list (index 0) is top? Or Bottom?
-                                    // Implementation: standard array order 0..N.
-                                    // Let's assume index 0 is "Bottom" and N is "Top" (Painter's algorithm).
-                                    // HTML List usually shows Index 0 at top. 
-                                    // If UI list top is Ind 0, then Ind 0 should be "Top" z-index?
-                                    // Let's assume UI List Order = Z-Index Order (Top of list = Top Z).
-                                    // So index 0 is winner.
-                                    
-                                    // Wait, if I iterate array usually user expects Top item to be on top.
-                                    // activeLayers follows settings.layerOrder.
-                                    // Let's say layerOrder[0] is the top item in the sidebar.
-                                    // Then it should be the winner.
-                                    
                                     contentDiv.textContent = isEmpty ? '' : label;
                                 } else {
                                     // Not in active layer
-                                    cell.style.backgroundColor = 'var(--bg)'; // Dim/Hide?
-                                    // Actually prompt says "Visible... based on selected".
-                                    // If not in overlay, usually we dim it or hide label.
-                                    // Let's hide label, keep color dim.
                                     contentDiv.textContent = '';
-                                    cell.style.opacity = '0.3';
+                                    // Issue 3: Subdue empty
+                                    if(state.settings.subdueEmpty) cell.style.opacity = '0.3'; 
                                 }
                                 
                                 // Restore opacity for hits
@@ -779,40 +916,25 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                                     const heatmapColor = HEAT_MAP_COLORS[Math.min(count, 4)];
                                     cell.style.backgroundColor = heatmapColor;
                                     contentDiv.style.color = getContrastYIQ(heatmapColor);
-                                    
-                                    // "Show all labels comma-separated" -> List overlay names?
-                                    // Prompt: "Show all labels comma-separated in cell"
-                                    // But the cell label is fixed (Model Artifact).
-                                    // It probably means "Show Overlay Names" OR "Show artifact label".
-                                    // Context: "Rendering cell labels is dynamic".
-                                    // Usually this means showing the Artifact Label if active.
-                                    // If the prompt meant showing WHICH overlays contributed: "Show all labels comma-separated" likely refers to the Artifact Label (which is 1 string). 
-                                    // ACTUALLY: Prompt says "Show all labels comma-separated" under Merge Mode logic.
-                                    // If 3 overlays select this cell, do we repeat the cell label 3 times? No.
-                                    // Do we list the overlay names? "UAF 1.3, Minimal". That makes sense for collision detection.
-                                    // Let's show artifact label + count badge? 
-                                    // Prompt is specific: "Show all labels".
-                                    // I will append overlay names if space permits, or just the artifact label if it's the artifact.
-                                    // Re-reading: "rendering cell labels is dynamic based on those selected".
-                                    // I'll stick to: Show Artifact Label. If multiple, it's just the one label.
-                                    // WAIT: "Show all labels comma-separated in cell" in PROMPT section "Merge Modes".
-                                    // If I have Overlay A (Label: "View 1") and Overlay B (Label: "View 1")...
-                                    // Maybe it implies overlays can rename labels? No, model is static.
-                                    // I will assume it means: Show the artifact label.
-                                    
+                                    cell.style.opacity = '1';
                                     contentDiv.textContent = label;
                                 } else {
                                     contentDiv.textContent = '';
-                                    cell.style.opacity = '0.3';
+                                    // Issue 3
+                                    if(state.settings.subdueEmpty) cell.style.opacity = '0.3';
+                                    else cell.style.opacity = '1';
                                 }
                             }
                             else if (state.settings.mergeMode === 'intersect') {
                                 // Only if ALL active layers have it
                                 if (hits.length === activeLayers.length && !isEmpty) {
                                     contentDiv.textContent = label;
+                                    cell.style.opacity = '1';
                                 } else {
                                     contentDiv.textContent = '';
-                                    cell.style.opacity = '0.3';
+                                    // Issue 3
+                                    if(state.settings.subdueEmpty) cell.style.opacity = '0.3';
+                                    else cell.style.opacity = '1';
                                 }
                             }
                         }
@@ -844,8 +966,9 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
 
         function updateSelectionCount() {
             let count = 0;
-            state.selection.forEach(row => row.forEach(val => count += val));
-            document.getElementById('selection-count').innerText = count;
+            if(state.selection) state.selection.forEach(row => row.forEach(val => count += val));
+            const el = document.getElementById('selection-count');
+            if(el) el.innerText = count;
         }
 
         function setMode(newMode) {
@@ -856,53 +979,201 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             const btnOver = document.getElementById('btn-mode-overlay');
             const hud = document.getElementById('editor-hud');
             const sidebar = document.getElementById('sidebar-layers');
+            const btnSidebar = document.getElementById('btn-toggle-sidebar');
 
             if (newMode === 'overlay') {
-                btnDisp.classList.remove('primary');
-                btnOver.classList.add('primary');
+                btnDisp.classList.remove('active-blue');
+                btnOver.classList.add('active-orange');
                 hud.classList.remove('hidden');
                 sidebar.classList.add('hidden'); // "Layer panel hidden in Overlays mode"
+                btnSidebar.classList.add('hidden'); // Hide sidebar toggle check
             } else {
-                btnDisp.classList.add('primary');
-                btnOver.classList.remove('primary');
+                 btnDisp.classList.add('active-blue');
+                btnOver.classList.remove('active-orange');
                 hud.classList.add('hidden');
                 sidebar.classList.remove('hidden');
                 if(!state.settings.isSidebarOpen) sidebar.classList.add('closed');
+                btnSidebar.classList.remove('hidden'); // Show sidebar toggle check
             }
             
             saveStorage();
             updateGridContent();
         }
 
-        function saveOverlay() {
-            const name = document.getElementById('inp-overlay-name').value || `Overlay ${new Date().toLocaleTimeString()}`;
-            
-            const newOv = {
-                id: crypto.randomUUID(),
-                name: name,
-                description: '',
-                cells: JSON.parse(JSON.stringify(state.selection)), // Deep copy 2D arr
-                visible: true,
-                created: new Date().toISOString()
-            };
+        function populateOverlaySelect() {
+             const sel = document.getElementById('sel-edit-overlay');
+             sel.innerHTML = '<option value="">Start New...</option>';
+             state.overlays.forEach(ov => {
+                 const opt = document.createElement('option');
+                 opt.value = ov.id;
+                 opt.textContent = ov.name;
+                 sel.appendChild(opt);
+             });
+             // Select current if editing
+             if(state.editingId) sel.value = state.editingId;
+        }
 
-            state.overlays.push(newOv);
-            state.settings.layerOrder.unshift(newOv.id); // Add to top
+        function loadOverlayForEdit(id) {
+            if(!id) {
+                // Start New
+                state.editingId = null;
+                resetSelection();
+                document.getElementById('inp-overlay-name').value = '';
+                updateSelectionCount();
+                updateGridContent();
+                return;
+            }
+            const ov = state.overlays.find(o => o.id === id);
+            if(ov) {
+                state.editingId = id;
+                state.selection = JSON.parse(JSON.stringify(ov.cells));
+                document.getElementById('inp-overlay-name').value = ov.name;
+                updateSelectionCount();
+                updateGridContent();
+            }
+        }
+
+        function showToast(msg) {
+             const c = document.getElementById('toast-container');
+             const t = document.createElement('div');
+             t.className = 'toast';
+             t.innerText = msg;
+             c.appendChild(t);
+             setTimeout(()=>t.remove(), 3000);
+        }
+
+        function saveOverlay() {
+            const nameInp = document.getElementById('inp-overlay-name');
+            const name = nameInp.value || `Overlay ${new Date().toLocaleTimeString()}`;
             
+            if (state.editingId) {
+                // Update existing
+                const ov = state.overlays.find(o => o.id === state.editingId);
+                if(ov) {
+                    ov.name = name;
+                    ov.cells = JSON.parse(JSON.stringify(state.selection));
+                    ov.modified = new Date().toISOString();
+                }
+            } else {
+                // Create New
+                const newOv = {
+                    id: crypto.randomUUID(),
+                    name: name,
+                    description: '',
+                    cells: JSON.parse(JSON.stringify(state.selection)), // Deep copy 2D arr
+                    visible: true,
+                    created: new Date().toISOString()
+                };
+                state.overlays.push(newOv);
+                state.settings.layerOrder.unshift(newOv.id); // Add to top
+                state.editingId = newOv.id; // Switch to editing this one
+            }
+
             saveStorage();
-            
-            // Cleanup
-            document.getElementById('inp-overlay-name').value = '';
-            resetSelection();
-            
-            // Switch back to view? Prompt says: "Switches to Overlays mode" for New Overlay.
-            // Does Save switch back? Usually yes.
-            // Let's stay in Editor to allow bulk creation, or maybe clear selection.
-            // Prompt 5: "Clicking Save ... saves ... HTML form enables adding vars".
-            // I'll stick to staying in Editor but clearing selection.
-            
-            alert('Overlay Saved!');
+            showToast('Overlay Saved!'); // Issue 9
             renderLayerList();
+            populateOverlaySelect();
+        }
+
+        function updateAlignment(val) {
+             const target = document.getElementById('sel-align-target').value;
+             if(['left','center','right'].includes(val)) state.settings.alignment[target].h = val;
+             if(['top','middle','bottom'].includes(val)) state.settings.alignment[target].v = val;
+             saveStorage();
+             renderGridStructure(); // Re-render to apply styles
+             updateGridContent(); // Issue 1: Fix - invisible cells until refresh
+        }
+        
+        function downloadGrid(format) {
+             // Issue 4: Export Fixes
+             const table = document.getElementById('main-grid');
+             const svgNS = "http://www.w3.org/2000/svg";
+             
+             // 1. Get exact dimensions & cloned node
+             const { width, height } = table.getBoundingClientRect();
+             const clone = table.cloneNode(true);
+             
+             // 2. Explicitly inline necessary styles because foreignObject isolated environment 
+             // might miss global CSS that isn't inline style.
+             // We rely on renderGridStructure's output which IS mostly inline.
+             // But we need to make sure basic font/colors are present.
+             clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+             clone.style.width = width + 'px';
+             clone.style.height = height + 'px';
+             clone.style.fontFamily = 'sans-serif';
+             clone.style.background = getComputedStyle(document.body).getPropertyValue('--bg');
+             clone.style.color = getComputedStyle(document.body).getPropertyValue('--text-main');
+             
+             const serializer = new XMLSerializer();
+             const tableStr = serializer.serializeToString(clone);
+             
+             // 3. Build SVG
+             const svgData = `
+             <svg xmlns="${svgNS}" width="${width}" height="${height}">
+               <defs>
+                 <style type="text/css">
+                    /* Minimal reset for table */
+                    table { border-collapse: collapse; width: 100%; height: 100%; }
+                    td, th { border: 1px solid #999; box-sizing: border-box; }
+                 </style>
+               </defs>
+               <foreignObject width="100%" height="100%">
+                 ${tableStr}
+               </foreignObject>
+             </svg>`;
+             
+             const blob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+             const url = URL.createObjectURL(blob);
+             
+             const now = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+             const topLayerId = state.settings.layerOrder[0];
+             const topLayer = topLayerId ? state.overlays.find(o=>o.id===topLayerId) : null;
+             const topName = topLayer ? topLayer.name.replace(/\s+/g,'_') : 'No-Layer';
+             const filename = `ARGOS_v1-0-1_${topName}_${now}`;
+
+             if (format === 'svg') {
+                 triggerDownload(url, filename + '.svg');
+             } else {
+                 // PNG: Wait for image load
+                 const img = new Image();
+                 img.onload = () => {
+                     const canvas = document.createElement('canvas');
+                     canvas.width = width;
+                     canvas.height = height;
+                     const ctx = canvas.getContext('2d');
+                     // Draw bg
+                     ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg');
+                     ctx.fillRect(0,0,width,height);
+                     
+                     ctx.drawImage(img, 0, 0);
+                     triggerDownload(canvas.toDataURL('image/png'), filename + '.png');
+                     URL.revokeObjectURL(url);
+                 };
+                 img.src = url;
+             }
+        }
+        
+        function triggerDownload(url, name) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function exportSingleOverlay() {
+            if(!state.editingId) return;
+            const ov = state.overlays.find(o => o.id === state.editingId);
+            if(!ov) return;
+            
+            const exportObj = {
+                metadata: { type: 'ARGOS_SINGLE_OVERLAY', version: "1.0.1" },
+                overlay: ov
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+             const now = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+            triggerDownload(dataStr, `ARGOS-OVERLAY_${ov.name.replace(/\s+/g,'_')}_${now}.json`);
         }
 
         // --------------------------------------------------------------------
@@ -1104,6 +1375,76 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 updateSelectionCount();
             });
             document.getElementById('btn-save-overlay').addEventListener('click', saveOverlay);
+            
+            // New 10-Point Plan Listeners
+            // overlay selection
+            document.getElementById('sel-edit-overlay').addEventListener('change', (e) => loadOverlayForEdit(e.target.value));
+            document.getElementById('btn-export-overlay').addEventListener('click', exportSingleOverlay);
+            
+            // color picker
+            document.getElementById('inp-sel-color').addEventListener('change', (e) => {
+                state.settings.selectionColor = e.target.value;
+                document.documentElement.style.setProperty('--primary', e.target.value);
+                saveStorage();
+            });
+            
+            // alignments
+            document.getElementById('btn-align-left').addEventListener('click',()=>updateAlignment('left'));
+            document.getElementById('btn-align-center').addEventListener('click',()=>updateAlignment('center'));
+            document.getElementById('btn-align-right').addEventListener('click',()=>updateAlignment('right'));
+            document.getElementById('btn-align-top').addEventListener('click',()=>updateAlignment('top'));
+            document.getElementById('btn-align-middle').addEventListener('click',()=>updateAlignment('middle'));
+            document.getElementById('btn-align-bottom').addEventListener('click',()=>updateAlignment('bottom'));
+            
+            // downloads
+            document.getElementById('btn-download-png').addEventListener('click', ()=>downloadGrid('png'));
+            document.getElementById('btn-download-svg').addEventListener('click', ()=>downloadGrid('svg'));
+            
+            // Subdue
+            document.getElementById('chk-subdue-empty').addEventListener('change', (e) => {
+                state.settings.subdueEmpty = e.target.checked;
+                saveStorage();
+                updateGridContent();
+            });
+            
+            // Import Overlay
+            document.getElementById('btn-import-overlay').addEventListener('click', () => {
+                document.getElementById('file-import-overlay').click();
+            });
+            document.getElementById('file-import-overlay').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    try {
+                        const json = JSON.parse(re.target.result);
+                        if(json.metadata && json.metadata.type === 'ARGOS_SINGLE_OVERLAY' && json.overlay) {
+                             const ov = json.overlay;
+                             // Assign new ID to avoid conflict
+                             ov.id = crypto.randomUUID();
+                             ov.name = ov.name + ' (Imported)';
+                             ov.visible = true;
+                             state.overlays.push(ov);
+                             state.settings.layerOrder.unshift(ov.id);
+                             saveStorage();
+                             renderLayerList();
+                             populateOverlaySelect();
+                             showToast('Overlay Imported');
+                             // Switch to it
+                             state.editingId = ov.id;
+                             document.getElementById('sel-edit-overlay').value = ov.id;
+                             loadOverlayForEdit(ov.id);
+                        } else {
+                            showToast('Invalid Overlay File');
+                        }
+                    } catch(err) {
+                        console.error(err);
+                        showToast('Error parsing file');
+                    }
+                };
+                reader.readAsText(file);
+            });
+
 
             // Layers
             document.getElementById('btn-new-overlay').addEventListener('click', () => setMode('overlay'));
