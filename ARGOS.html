@@ -1,483 +1,442 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Argos — Architecture Repository for Governance &amp; Operational Standards</title>
-  <style>
-    :root {
-      --bg-base:#f4f4f8;
-      --bg-panel:#ffffff;
-      --bg-dark:#04070f;
-      --text-dark:#1c1c26;
-      --text-light:#eef2ff;
-      --text-muted:#5c6375;
-      --brand:#3dd1c8;
-      --border:#d4d9ea;
-      --panel-shadow:0 20px 45px rgba(15, 23, 42, 0.15);
-    }
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Argos</title>
+    <style>
+        :root {
+            /* Light Mode Defaults */
+            --bg: #f9fafb;
+            --surface: #ffffff;
+            --surface-hover: #f3f4f6;
+            --border: #e5e7eb;
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --primary: #4A90E2;
+            --primary-fg: #ffffff;
+            --danger: #ef4444;
+            --font-size: 14px;
+            --grid-cell_bg: #ffffff;
+            --grid-border: #e5e7eb;
+        }
 
-    * { box-sizing:border-box; }
+        [data-theme="dark"] {
+            --bg: #111827;
+            --surface: #1f2937;
+            --surface-hover: #374151;
+            --border: #374151;
+            --text-main: #f9fafb;
+            --text-main-inverse: #000;
+            --text-sub: #9ca3af;
+            --grid-cell_bg: #1f2937;
+            --grid-border: #4b5563;
+        }
 
-    body {
-      margin:0;
-      min-height:100vh;
-      font-family:"Space Grotesk", "Inter", system-ui, sans-serif;
-      background:var(--bg-base);
-      color:var(--text-dark);
-      display:flex;
-      flex-direction:column;
-    }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            font-size: var(--font-size);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-    body.theme-dark {
-      background:#050914;
-      color:var(--text-light);
-    }
+        /* Layout */
+        header {
+            height: 50px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            flex-shrink: 0;
+            z-index: 20;
+        }
 
-    .app-header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      position:sticky;
-      top:0;
-      z-index:5;
-      padding:0.75rem 1.25rem;
-      background:rgba(255,255,255,0.92);
-      border-bottom:1px solid var(--border);
-      backdrop-filter:blur(12px);
-    }
+        .brand { font-weight: 700; font-size: 1.1rem; color: var(--primary); letter-spacing: -0.02em; }
+        .header-controls { display: flex; gap: 0.5rem; }
 
-    body.theme-dark .app-header {
-      background:rgba(3, 7, 17, 0.95);
-      border-color:rgba(255,255,255,0.08);
-    }
+        main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
 
-    .app-logo {
-      display:flex;
-      align-items:center;
-      gap:0.5rem;
-      font-weight:600;
-    }
+        #grid-container {
+            flex: 1;
+            overflow: auto;
+            padding: 1rem;
+            position: relative;
+        }
 
-    .app-logo span {
-      color:var(--brand);
-      text-transform:uppercase;
-      letter-spacing:0.1em;
-    }
+        aside {
+            width: 320px;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: width 0.2s;
+            z-index: 10;
+        }
+        
+        aside.closed { width: 0; border: 0; }
+        aside.closed > * { display: none; }
 
-    .header-actions {
-      display:flex;
-      align-items:center;
-      gap:0.5rem;
-    }
+        /* Generic UI Elements */
+        button {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+        button:hover { background: var(--surface-hover); }
+        button.primary { background: var(--primary); color: var(--primary-fg); border-color: transparent; }
+        button.primary:hover { opacity: 0.9; }
+        button.danger { color: var(--danger); border-color: var(--border); }
+        button.icon-btn { padding: 0.4rem;  }
+        
+        input[type="text"], select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.4rem;
+            border-radius: 4px;
+            width: 100%;
+        }
 
-    .icon-button,
-    .action-button {
-      border:0;
-      border-radius:999px;
-      padding:0.5rem 0.95rem;
-      font-weight:600;
-      cursor:pointer;
-      background:var(--brand);
-      color:#021118;
-      transition:transform 0.2s ease;
-    }
+        .panel-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+        }
 
-    .icon-button span {
-      display:block;
-      width:20px;
-      height:2px;
-      background:#021118;
-      margin:4px 0;
-      border-radius:2px;
-    }
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
 
-    .mode-toggle {
-      background:transparent;
-      border:1px solid rgba(0,0,0,0.1);
-      color:var(--text-dark);
-    }
+        /* Grid Table */
+        table {
+            border-collapse: collapse;
+            table-layout: fixed; 
+            width: 100%;
+            font-size: 0.9em;
+        }
+        
+        th, td {
+            border: 1px solid var(--grid-border);
+            padding: 4px 6px;
+            vertical-align: top;
+            min-width: 120px;
+            height: 80px;
+            position: relative;
+            background-color: var(--grid-cell_bg);
+            transition: outline 0.1s;
+        }
 
-    body.theme-dark .mode-toggle {
-      border-color:rgba(255,255,255,0.4);
-      color:var(--text-light);
-    }
+        /* Headers */
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            height: auto;
+            text-align: center;
+            font-weight: 600;
+            background: var(--surface); /* Fallback */
+            color: var(--text-main);
+            box-shadow: 0 1px 0 var(--border);
+        }
+        
+        /* Row Headers (Domains) */
+        tbody th {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            text-align: left;
+            font-weight: 600;
+            width: 180px;
+            background: var(--surface); /* Fallback */
+            box-shadow: 1px 0 0 var(--border);
+        }
+        
+        /* Corner Piece */
+        thead th:first-child {
+            position: sticky;
+            left: 0;
+            top: 0;
+            z-index: 3;
+            background: var(--surface);
+            border: 1px solid var(--grid-border);
+        }
 
-    main.grid-workspace {
-      flex:1;
-      position:relative;
-      display:flex;
-      width:100%;
-      overflow:hidden;
-    }
+        /* Cell Content */
+        .cell-content {
+            font-size: 0.85em;
+            line-height: 1.3;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        /* Interaction States */
+        .mode-overlay td { cursor: pointer; }
+        .mode-overlay td:hover { background-color: rgba(74, 144, 226, 0.1) !important; }
+        .cell-selected {
+            outline: 3px solid var(--primary);
+            outline-offset: -3px;
+            z-index: 1;
+        }
 
-    .mode-panel {
-      flex:1;
-      padding:1.25rem;
-      display:flex;
-      flex-direction:column;
-      gap:1rem;
-    }
+        /* Layer List Item */
+        .layer-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .layer-item.dragging { opacity: 0.5; }
+        .layer-info { flex: 1; overflow: hidden; }
+        .layer-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .layer-meta { font-size: 0.8em; color: var(--text-sub); }
+        .layer-actions { display: flex; gap: 2px; }
 
-    .grid-canvas {
-      flex:1;
-      background:var(--bg-panel);
-      border-radius:18px;
-      box-shadow:var(--panel-shadow);
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-    }
+        /* Settings Menu (Hamburger) */
+        #settings-menu {
+            position: fixed;
+            top: 50px;
+            right: 0;
+            bottom: 0;
+            width: 300px;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+        }
+        #settings-menu.open { transform: translateX(0); }
 
-    body.theme-dark .grid-canvas {
-      background:#0c1420;
-      box-shadow:0 25px 50px rgba(0,0,0,0.4);
-    }
+        /* Utilities */
+        .hidden { display: none !important; }
+        .badge {
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: var(--border);
+            color: var(--text-main);
+        }
+        
+        /* Editor HUD */
+        #editor-hud {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            z-index: 25;
+            min-width: 600px;
+        }
 
-    .grid-wrapper {
-      flex:1;
-      overflow:auto;
-      padding:0.5rem;
-      min-height:0;
-    }
+        /* Grouping controls */
+        .control-group { margin-bottom: 1.5rem; }
+        .control-group h4 { margin: 0 0 0.5rem 0; font-size: 0.9em; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.05em; }
 
-    .grid-wrapper table {
-      width:100%;
-      height:100%;
-      border-collapse:collapse;
-    }
-
-    .grid-wrapper th,
-    .grid-wrapper td {
-      border:1px solid rgba(0,0,0,0.05);
-      min-width:140px;
-      height:100px;
-      padding:0.5rem;
-      font-size:0.8rem;
-      line-height:1.25;
-      vertical-align:top;
-      word-break:break-word;
-      overflow:hidden;
-      color:inherit;
-    }
-
-    body.theme-dark .grid-wrapper th,
-    body.theme-dark .grid-wrapper td {
-      color:#f7f8ff;
-    }
-
-    .grid-wrapper th {
-      text-transform:uppercase;
-      font-size:0.7rem;
-      letter-spacing:0.08em;
-    }
-
-    .domain-label {
-      font-weight:700;
-    }
-
-    .cell-content {
-      display:flex;
-      align-items:flex-start;
-      justify-content:flex-start;
-      flex-direction:column;
-      gap:0.35rem;
-    }
-
-    .cell-label {
-      font-size:0.75rem;
-    }
-
-    .grid-wrapper.hide-labels .cell-label {
-      opacity:0;
-    }
-
-    .overlay-drawer {
-      position:absolute;
-      top:0;
-      right:0;
-      width:320px;
-      height:100%;
-      background:var(--bg-panel);
-      border-left:1px solid rgba(0,0,0,0.08);
-      box-shadow:-10px 15px 40px rgba(0,0,0,0.25);
-      transform:translateX(100%);
-      transition:transform 0.25s ease;
-      padding:1.25rem;
-      display:flex;
-      flex-direction:column;
-      gap:1rem;
-      z-index:4;
-    }
-
-    body.theme-dark .overlay-drawer {
-      background:#0c1420;
-      border-color:rgba(255,255,255,0.08);
-      box-shadow:-10px 15px 40px rgba(0,0,0,0.8);
-    }
-
-    body.menu-open .overlay-drawer {
-      transform:translateX(0);
-    }
-
-    .drawer-header h2 {
-      margin:0;
-      font-size:1.1rem;
-    }
-
-    .drawer-controls {
-      display:flex;
-      gap:0.5rem;
-      flex-wrap:wrap;
-    }
-
-    .drawer-controls button {
-      flex:1;
-      font-size:0.75rem;
-      padding:0.45rem 0.7rem;
-      border-radius:8px;
-      background:rgba(255,255,255,0.1);
-      color:inherit;
-      border:1px solid rgba(255,255,255,0.1);
-    }
-
-    body.theme-dark .drawer-controls button {
-      background:rgba(255,255,255,0.08);
-      border-color:rgba(255,255,255,0.2);
-    }
-
-    .overlay-list {
-      flex:1;
-      overflow:auto;
-      display:flex;
-      flex-direction:column;
-      gap:0.75rem;
-    }
-
-    .overlay-card {
-      border:1px solid rgba(0,0,0,0.1);
-      border-radius:12px;
-      padding:0.75rem;
-      background:rgba(255,255,255,0.9);
-      display:flex;
-      flex-direction:column;
-      gap:0.2rem;
-    }
-
-    body.theme-dark .overlay-card {
-      background:rgba(255,255,255,0.04);
-      border-color:rgba(255,255,255,0.15);
-    }
-
-    .overlay-card strong {
-      font-size:0.95rem;
-    }
-
-    .overlay-card p {
-      margin:0;
-      font-size:0.8rem;
-      color:var(--text-muted);
-    }
-
-    .overlay-card small {
-      color:var(--brand);
-    }
-
-    .overlay-card button {
-      align-self:flex-start;
-      margin-top:0.35rem;
-      background:rgba(0,0,0,0.05);
-      border:0;
-      border-radius:8px;
-      padding:0.35rem 0.8rem;
-      cursor:pointer;
-      font-weight:600;
-    }
-
-    .editor-panel {
-      display:none;
-      background:rgba(255,255,255,0.9);
-      border-radius:18px;
-      box-shadow:var(--panel-shadow);
-      padding:1.25rem;
-    }
-
-    body.theme-dark .editor-panel {
-      background:rgba(7,12,22,0.9);
-    }
-
-    .editor-panel.active {
-      display:flex;
-    }
-
-    .editor-panel h3 {
-      margin:0;
-    }
-
-    .editor-panel textarea {
-      width:100%;
-      border-radius:12px;
-      border:1px solid var(--border);
-      padding:0.75rem;
-      font-family:inherit;
-      resize:vertical;
-    }
-
-    .editor-actions {
-      display:flex;
-      gap:0.5rem;
-    }
-
-    .modal {
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,0.35);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:1.5rem;
-      z-index:10;
-    }
-
-    .modal.visible {
-      display:flex;
-    }
-
-    .modal-card {
-      background:var(--bg-panel);
-      border-radius:16px;
-      width:100%;
-      max-width:480px;
-      padding:1.5rem;
-      box-shadow:var(--panel-shadow);
-      display:flex;
-      flex-direction:column;
-      gap:1rem;
-    }
-
-    body.theme-dark .modal-card {
-      background:#0c1420;
-      color:var(--text-light);
-    }
-
-    .modal-card input,
-    .modal-card textarea {
-      width:100%;
-      border-radius:10px;
-      border:1px solid var(--border);
-      padding:0.55rem 0.75rem;
-      font-family:inherit;
-    }
-
-    .modal-actions {
-      display:flex;
-      justify-content:flex-end;
-      gap:0.5rem;
-    }
-
-    .modal-actions button {
-      border-radius:999px;
-      border:0;
-      padding:0.5rem 1rem;
-      cursor:pointer;
-      font-weight:600;
-    }
-
-    .modal-close {
-      background:rgba(255,255,255,0.1);
-    }
-
-    @media (max-width:900px) {
-      .overlay-drawer {
-        width:100%;
-      }
-
-      main.grid-workspace {
-        flex-direction:column;
-      }
-    }
-  </style>
+        /* Radio list */
+        .radio-list label {
+            display: block;
+            margin-bottom: 0.4rem;
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body class="theme-light" data-mode="viewer">
-  <header class="app-header">
-    <button class="icon-button" id="menuToggle" aria-label="Open overlays menu">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-    <div class="app-logo">
-      <span>Argos</span>
-      <span>Architecture Repository</span>
-    </div>
-    <div class="header-actions">
-      <button class="mode-toggle" id="modeToggle">Viewer Mode</button>
-      <button class="action-button" id="themeToggle">Dark Theme</button>
-    </div>
-  </header>
+<body data-theme="light">
 
-  <main class="grid-workspace">
-    <section class="mode-panel viewer-panel" data-mode-panel="viewer">
-      <div class="grid-canvas">
-        <div class="grid-wrapper" id="gridWrapper">
-          <table id="gridMount"></table>
+    <!-- Header -->
+    <header>
+        <div class="brand">ARGOS <span style="font-weight: 400; font-size: 0.8em; color: var(--text-sub);">UAF 1.3</span></div>
+        <div class="header-controls">
+            <!-- Mode Toggle -->
+             <div style="background: var(--bg); padding: 2px; border-radius: 4px; border: 1px solid var(--border); display: flex;">
+                 <button id="btn-mode-display" class="primary" style="border:0; border-radius: 2px;">Display</button>
+                 <button id="btn-mode-overlay" style="border:0; background: transparent; border-radius: 2px;">Editor</button>
+             </div>
+             
+             <!-- Sidebar Toggle -->
+             <button id="btn-toggle-sidebar" class="icon-btn" title="Toggle Layers">
+                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg>
+             </button>
+
+             <!-- Settings Toggle -->
+             <button id="btn-settings" class="icon-btn" title="Settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+             </button>
         </div>
-      </div>
-    </section>
+    </header>
 
-    <section class="mode-panel editor-panel" data-mode-panel="editor">
-      <div>
-        <h3>Editor Mode</h3>
-        <p>Select viewpoints by name to create a new overlay. Use the drawer to manage overlays once saved.</p>
-        <p style="color:var(--text-muted);font-size:0.85rem;">Enter label text exactly as shown in the grid (new line separated).</p>
-      </div>
-      <textarea id="editorTextarea" rows="4" placeholder="Enter viewpoint labels here"></textarea>
-      <div class="editor-actions">
-        <button class="action-button" id="createCustomOverlay">Create Custom Overlay</button>
-      </div>
-    </section>
-
-    <aside class="overlay-drawer" id="overlayDrawer">
-      <div class="drawer-header">
-        <h2>Layers</h2>
-        <p style="margin:0;font-size:0.8rem;color:var(--text-muted);">Drag order affects merged overlays, visibility filters what renders.</p>
-      </div>
-      <div class="drawer-controls">
-        <button id="importButton">Import</button>
-        <button id="exportButton">Export</button>
-        <button id="clearStorage">Clear</button>
-      </div>
-      <div class="drawer-controls">
-        <button id="hideAllButton">Hide Labels</button>
-        <input type="search" id="overlaySearch" placeholder="Search overlays" style="flex:1;border-radius:12px;border:1px solid var(--border);padding:0.4rem 0.9rem;" />
-      </div>
-      <div class="overlay-list" id="overlayList"></div>
-      <input type="file" accept="application/json" id="importInput" style="display:none" />
-    </aside>
-  </main>
-
-  <div class="modal" id="overlayModal" aria-hidden="true">
-    <div class="modal-card">
-      <h3>Create Overlay</h3>
-      <form id="createOverlayForm">
-        <input type="text" id="overlayName" placeholder="Overlay name" required />
-        <textarea id="overlayDescription" rows="2" placeholder="Optional description"></textarea>
-        <textarea id="overlayCells" rows="4" placeholder="Comma-separated labels"></textarea>
-        <div class="modal-actions">
-          <button type="button" class="modal-close" id="modalCancel">Cancel</button>
-          <button type="submit" class="action-button">Create overlay</button>
+    <main id="app-main">
+        <!-- Grid Area -->
+        <div id="grid-container">
+            <table id="main-grid">
+                <!-- JS will populate -->
+            </table>
         </div>
-      </form>
-    </div>
-  </div>
 
-  <script>
-    (() => {
-      const labelCSV = `Domain (Y-Axis)\\Model Kinds (X-Axis),Motivation (Mv),Taxonomy (Tx),Structure (Sr),Connectivity (Cn),Processes (Pr),States (St),Sequences (Sq),Information (If),Parameters (Pm),Constraints (Ct),Roadmap (Rm),Traceability (Tr)
+        <!-- Editor HUD (Floating) -->
+        <div id="editor-hud" class="hidden">
+            <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                <span style="font-weight: 700; font-size:0.9em;">Overlay Editor</span>
+                <span style="font-size:0.8em; color: var(--text-sub);">Selected: <span id="selection-count">0</span></span>
+            </div>
+            <div style="width: 1px; height: 30px; background: var(--border);"></div>
+            <div style="display:flex; gap: 0.5rem;">
+                <button id="btn-sel-all">Select All</button>
+                <button id="btn-sel-clear">Clear</button>
+                <button id="btn-sel-invert">Invert</button>
+            </div>
+            <div style="width: 1px; height: 30px; background: var(--border);"></div>
+            <div style="display:flex; gap: 0.5rem; flex: 1;">
+                <input type="text" id="inp-overlay-name" placeholder="New Overlay Name...">
+                <button id="btn-save-overlay" class="primary">Save Overlay</button>
+            </div>
+        </div>
+
+        <!-- Sidebar (Layers) -->
+        <aside id="sidebar-layers">
+            <div class="panel-header">
+                <span>Layers</span>
+                <button id="btn-new-overlay" class="primary" style="padding: 2px 8px; font-size: 0.8em;">+ New</button>
+            </div>
+            <div class="panel-content">
+                <!-- Rendering Controls -->
+                <div class="control-group">
+                    <h4>Merge Mode</h4>
+                    <div class="radio-list">
+                        <label><input type="radio" name="merge-mode" value="none"> None (Last active wins)</label>
+                        <label><input type="radio" name="merge-mode" value="add"> Union (Heatmap)</label>
+                        <label><input type="radio" name="merge-mode" value="intersect"> Intersect (Common only)</label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Active Overlays</h4>
+                    <div id="layer-list">
+                        <!-- Layer Items populated by JS -->
+                    </div>
+                    <div id="empty-layers-msg" class="hidden" style="text-align: center; color: var(--text-sub); padding: 1rem;">
+                        No overlays created.
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Settings Drawer (Right) -->
+        <div id="settings-menu">
+            <div class="panel-header">
+                <span>Settings</span>
+                <button id="btn-close-settings" class="icon-btn">✕</button>
+            </div>
+            <div class="panel-content">
+                <div class="control-group">
+                    <h4>Appearance</h4>
+                    <div style="display:flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Theme</span>
+                        <button id="btn-theme-toggle">Switch to Dark</button>
+                    </div>
+                    <div style="display:flex; align-items: center; justify-content: space-between;">
+                        <span>Font Size</span>
+                        <div style="display: flex; gap: 5px;">
+                            <button id="btn-font-dec">A-</button>
+                            <button id="btn-font-reset">R</button>
+                            <button id="btn-font-inc">A+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h4>Data Management</h4>
+                    <button id="btn-export" style="width: 100%; margin-bottom: 0.5rem;">Export JSON</button>
+                    <button id="btn-import" style="width: 100%; margin-bottom: 0.5rem;">Import JSON</button>
+                    <input type="file" id="file-import" accept=".json" class="hidden">
+                    <button id="btn-clear-storage" class="danger" style="width: 100%;">Clear Storage</button>
+                </div>
+
+                <div class="control-group">
+                    <h4>About</h4>
+                    <p style="font-size: 0.8em; color: var(--text-sub); line-height: 1.4;">
+                        Argos v1.0.0<br>
+                        UAF 1.3 Visualizer<br>
+                        Single-file SPA
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        /**
+         * ARGOS v1.0.0 - UAF 1.3 Visualizer
+         */
+
+        // --------------------------------------------------------------------
+        // Constants & Config
+        // --------------------------------------------------------------------
+        
+        const KEYS = {
+            MODELS: 'argos_models',
+            OVERLAYS: 'argos_overlays',
+            SETTINGS: 'argos_settings'
+        };
+
+        const HEAT_MAP_COLORS = {
+            1: '#4A90E2', // Single
+            2: '#FFB347', // Two
+            3: '#FF6B6B', // Three
+            4: '#C44569'  // Four+
+        };
+
+        // Raw Data (CSV)
+        const CSV_LABELS = `Domain (Y-Axis)\\Model Kinds (X-Axis),Motivation (Mv),Taxonomy (Tx),Structure (Sr),Connectivity (Cn),Processes (Pr),States (St),Sequences (Sq),Information (If),Parameters (Pm),Constraints (Ct),Roadmap (Rm),Traceability (Tr)
 Architecture Management (Am),Architecture Principles (Am-Mv),Architecture Extensions (Am-Tx),Architecture Views (Am-Sr),Architecture References (Am-Cn),Architecture Development Method (Am-Pr),Architecture Status (Am-St),<EMPTY>,Dictionary (Am-If),Architecture Parameters (Am-Pm),Architecture Constraints (Am-Ct),Architecture Roadmap (Am-Rm),Architecture Traceability (Am-Tr)
 Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov),Summary & Overview (Sm-Ov)
 Strategic (St),Strategic Motivation (St-Mv),Strategic Taxonomy (St-Tx),Strategic Structure (St-Sr),Strategic Connectivity (St-Cn),Strategic Processes (St-Pr),Strategic States (St-St),<EMPTY>,Strategic Information (St-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Strategic Constraints (St-Ct),Strategic Deployment / Strategic Phasing (St-Rm-D / St-Rm-P),Strategic Traceability (St-Tr)
 Operational (Op),Requirements (Rq-Mv),Operational Taxonomy (Op-Tx),Operational Structure (Op-Sr),Operational Connectivity (Op-Cn),Operational Processes (Op-Pr),Operational States (Op-St),Operational Sequences (Op-Sq),Operational Information (Op-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Operational Constraints (Op-Ct),<EMPTY>,Operational Traceability (Op-Tr)
-Services  (Sv),Requirements (Rq-Mv),Services Taxonomy (Sv-Tx),Services Structure (Sv-Sr),Services Connectivity (Sv-Cn),Services Processes (Sv-Pr),Services States (Sv-St),Services Sequences (Sv-Sq),Operational Information (Op-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Services Constraints (Sv-Ct),Services Roadmap (Sv-Rm),Services Traceability (Sv-Tr)
+Services (Sv),Requirements (Rq-Mv),Services Taxonomy (Sv-Tx),Services Structure (Sv-Sr),Services Connectivity (Sv-Cn),Services Processes (Sv-Pr),Services States (Sv-St),Services Sequences (Sv-Sq),Operational Information (Op-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Services Constraints (Sv-Ct),Services Roadmap (Sv-Rm),Services Traceability (Sv-Tr)
 Personnel (Ps),Requirements (Rq-Mv),Personnel Taxonomy (Ps-Tx),Personnel Structure (Ps-Sr),Personnel Connectivity (Ps-Cn),Personnel Processes (Ps-Pr),Personnel States (Ps-St),Personnel Sequences (Ps-Sq),Resources Information (Rs-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Competence / Drivers / Performance (Ps-Ct),Personnel Availability / Personnel Evolution / Personnel Forecast (Ps-Rm-A / Ps-Rm-E / Ps-Rm-F),Personnel Traceability (Ps-Tr)
 Resources (Rs),Requirements (Rq-Mv),Resources Taxonomy (Rs-Tx),Resources Structure (Rs-Sr),Resources Connectivity (Rs-Cn),Resources Processes (Rs-Pr),Resources States (Rs-St),Resources Sequences (Rs-Sq),Resources Information (Rs-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Resources Constraints (Rs-Ct),Resources Evolution / Forecast (Rs-Rm-E / Rs-Rm-F),Resources Traceability (Rs-Tr)
 Security (Sc),Security Controls (Sc-Mv),Security Taxonomy (Sc-Tx),Security Structure (Sc-Sr),Security Connectivity (Sc-Cn),Security Processes (Sc-Pr),<EMPTY>,<EMPTY>,Resources Information (Rs-If),Environment / Measurements / Risks (En-Pm-E / Me-Pm-M / Rk-Pm-R),Security Constraints (Sc-Ct),<EMPTY>,Security Traceability (Sc-Tr)
@@ -485,388 +444,711 @@ Projects (Pj),<EMPTY>,Projects Taxonomy (Pj-Tx),Projects Structure (Pj-Sr),Proje
 Standards (Sd),<EMPTY>,Standards Taxonomy (Sd-Tx),Standards Structure (Sd-Sr),<EMPTY>,<EMPTY>,<EMPTY>,<EMPTY>,<EMPTY>,<EMPTY>,<EMPTY>,Standards Roadmap (Sd-Rm),Standards Traceability (Sd-Tr)
 Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual Resources Connectivity (Ar-Cn),Simulation,Simulation,Simulation,<EMPTY>,<EMPTY>,Parametric Execution/Evaluation,<EMPTY>,<EMPTY>`;
 
-      const colorCSV = `#FFFFFF\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000
-#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#000000\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC\t#FFFFCC
-#595959\t#595959\t#595959\t#595959\t#595959\t#595959\t#595959\t#595959\t#595959\t#0070C0\t#595959\t#595959\t#595959
-#D7E4BD\t#D7E4BD\t#D7E4BD\t#D7E4BD\t#D7E4BD\t#D7E4BD\t#D7E4BD\t#000000\t#D7E4BD\t#0070C0\t#D7E4BD\t#D7E4BD\t#D7E4BD
-#8EB4E3\t#7F7F7F\t#8EB4E3\t#8EB4E3\t#8EB4E3\t#8EB4E3\t#8EB4E3\t#8EB4E3\t#BFBFBF\t#0070C0\t#8EB4E3\t#000000\t#8EB4E3
-#E6B9B8\t#7F7F7F\t#E6B9B8\t#E6B9B8\t#E6B9B8\t#E6B9B8\t#E6B9B8\t#E6B9B8\t#BFBFBF\t#0070C0\t#E6B9B8\t#E6B9B8\t#E6B9B8
-#FFFFFF\t#7F7F7F\t#FFFFFF\t#FFFFFF\t#FFFFFF\t#FFFFFF\t#FFFFFF\t#FFFFFF\t#BFBFBF\t#0070C0\t#FFFFFF\t#FFFFFF\t#FFFFFF
-#FCD5B5\t#7F7F7F\t#FCD5B5\t#FCD5B5\t#FCD5B5\t#FCD5B5\t#FCD5B5\t#FCD5B5\t#BFBFBF\t#0070C0\t#FCD5B5\t#FCD5B5\t#FCD5B5
-#B7DEE8\t#B7DEE8\t#B7DEE8\t#B7DEE8\t#B7DEE8\t#B7DEE8\t#000000\t#000000\t#BFBFBF\t#0070C0\t#B7DEE8\t#000000\t#B7DEE8
-#CCC1DA\t#000000\t#CCC1DA\t#CCC1DA\t#CCC1DA\t#CCC1DA\t#000000\t#000000\t#000000\t#0070C0\t#000000\t#CCC1DA\t#CCC1DA
-#C4BD97\t#000000\t#C4BD97\t#C4BD97\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#000000\t#C4BD97\t#C4BD97
-#595959\t#000000\t#000000\t#595959\t#595959\t#595959\t#595959\t#595959\t#000000\t#000000\t#595959\t#000000\t#000000`;
+        const CSV_COLORS = `#FFFFFF,#000000,#000000,#000000,#000000,#000000,#000000,#000000,#000000,#000000,#000000,#000000,#000000
+#FFFFCC,#FFFFCC,#FFFFCC,#FFFFCC,#FFFFCC,#FFFFCC,#FFFFCC,#000000,#FFFFCC,#FFFFCC,#FFFFCC,#FFFFCC,#FFFFCC
+#595959,#595959,#595959,#595959,#595959,#595959,#595959,#595959,#595959,#0070C0,#595959,#595959,#595959
+#D7E4BD,#D7E4BD,#D7E4BD,#D7E4BD,#D7E4BD,#D7E4BD,#D7E4BD,#000000,#D7E4BD,#0070C0,#D7E4BD,#D7E4BD,#D7E4BD
+#8EB4E3,#7F7F7F,#8EB4E3,#8EB4E3,#8EB4E3,#8EB4E3,#8EB4E3,#8EB4E3,#BFBFBF,#0070C0,#8EB4E3,#000000,#8EB4E3
+#E6B9B8,#7F7F7F,#E6B9B8,#E6B9B8,#E6B9B8,#E6B9B8,#E6B9B8,#E6B9B8,#BFBFBF,#0070C0,#E6B9B8,#E6B9B8,#E6B9B8
+#FFFFFF,#7F7F7F,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF,#BFBFBF,#0070C0,#FFFFFF,#FFFFFF,#FFFFFF
+#FCD5B5,#7F7F7F,#FCD5B5,#FCD5B5,#FCD5B5,#FCD5B5,#FCD5B5,#FCD5B5,#BFBFBF,#0070C0,#FCD5B5,#FCD5B5,#FCD5B5
+#B7DEE8,#B7DEE8,#B7DEE8,#B7DEE8,#B7DEE8,#B7DEE8,#000000,#000000,#BFBFBF,#0070C0,#B7DEE8,#000000,#B7DEE8
+#CCC1DA,#000000,#CCC1DA,#CCC1DA,#CCC1DA,#CCC1DA,#000000,#000000,#000000,#0070C0,#000000,#CCC1DA,#CCC1DA
+#C4BD97,#000000,#C4BD97,#C4BD97,#000000,#000000,#000000,#000000,#000000,#000000,#000000,#C4BD97,#C4BD97
+#595959,#000000,#000000,#595959,#595959,#595959,#595959,#595959,#000000,#000000,#595959,#000000,#000000`;
 
-      const STORAGE_KEY = 'argos:state';
-      const menuToggle = document.getElementById('menuToggle');
-      const overlayDrawer = document.getElementById('overlayDrawer');
-      const gridMount = document.getElementById('gridMount');
-      const gridWrapper = document.getElementById('gridWrapper');
-      const overlayList = document.getElementById('overlayList');
-      const hideAllButton = document.getElementById('hideAllButton');
-      const overlaySearch = document.getElementById('overlaySearch');
-      const themeToggle = document.getElementById('themeToggle');
-      const modeToggle = document.getElementById('modeToggle');
-      const viewerPanel = document.querySelector('[data-mode-panel="viewer"]');
-      const editorPanel = document.querySelector('[data-mode-panel="editor"]');
-      const createCustomOverlay = document.getElementById('createCustomOverlay');
-      const overlayModal = document.getElementById('overlayModal');
-      const modalCancel = document.getElementById('modalCancel');
-      const overlayForm = document.getElementById('createOverlayForm');
-      const overlayNameInput = document.getElementById('overlayName');
-      const overlayDescriptionInput = document.getElementById('overlayDescription');
-      const overlayCellsInput = document.getElementById('overlayCells');
-      const importInput = document.getElementById('importInput');
-      const importButton = document.getElementById('importButton');
-      const exportButton = document.getElementById('exportButton');
-      const clearStorageButton = document.getElementById('clearStorage');
 
-      const defaultState = {
-        overlays: [],
-        layerOrder: [],
-        mode: 'viewer',
-        theme: 'light',
-        hideAllOverlays: false,
-        searchTerm: ''
-      };
+        // --------------------------------------------------------------------
+        // State State
+        // --------------------------------------------------------------------
 
-      let colorMatrix = [];
-      let gridData;
-      let labelLookup = new Map();
-      const state = loadState();
+        const state = {
+            model: null,
+            overlays: [],
+            settings: {
+                theme: 'light',
+                fontSize: 14,
+                layerOrder: [], // Array of string IDs
+                activeMode: 'display', // 'display' | 'overlay'
+                mergeMode: 'none',     // 'none' | 'add' | 'intersect'
+                isSidebarOpen: true
+            },
+            // Runtime only
+            selection: [] // 2D array of 1/0
+        };
 
-      function parseLabels() {
-        const rows = labelCSV.trim().split('\n').map(line => line.split(','));
-        const headers = rows[0].slice(1).map(cell => cell.trim());
-        const domains = rows.slice(1).map(row => ({
-          domain: row[0].trim(),
-          cells: row.slice(1).map(cell => {
-            const text = cell.trim();
-            return text === '<EMPTY>' ? '' : text;
-          })
-        }));
-        return { headers, domains };
-      }
+        // --------------------------------------------------------------------
+        // Core Logic
+        // --------------------------------------------------------------------
 
-      function parseColors() {
-        return colorCSV.trim().split('\n').map(line => line.split(/\s+/).filter(Boolean));
-      }
+        function init() {
+            loadStorage();
+            
+            // Always rebuild model from CSVs to ensure latest data/logic (fixes header colors etc)
+            parseAndBuildModel();
 
-      function buildGridData() {
-        const labels = parseLabels();
-        colorMatrix = parseColors();
-        const rows = labels.domains.map((row, rowIndex) => ({
-          domain: row.domain,
-          cells: row.cells.map((label, colIndex) => ({
-            label,
-            color: (colorMatrix[rowIndex + 1] && colorMatrix[rowIndex + 1][colIndex]) || '#000',
-            rowIndex,
-            colIndex
-          }))
-        }));
-        gridData = { headers: labels.headers, rows };
-        buildLookup();
-      }
-
-      function buildLookup() {
-        labelLookup.clear();
-        gridData.rows.forEach(row => {
-          row.cells.forEach(cell => {
-            if (!cell.label) return;
-            const key = cell.label.toLowerCase();
-            if (!labelLookup.has(key)) labelLookup.set(key, []);
-            labelLookup.get(key).push({ rowIndex: cell.rowIndex, colIndex: cell.colIndex });
-          });
-        });
-      }
-
-      function loadState() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed && parsed.overlays) {
-              return { ...defaultState, ...parsed };
+            // Ensure Default UAF 1.3 Overlay exists
+            const hasDefault = state.overlays.some(o => o.name === 'UAF 1.3');
+            if (!hasDefault) {
+                createDefaultOverlay();
             }
-          }
-        } catch (error) {
-          console.warn('Unable to parse saved state', error);
+            
+            // Validate selection buffer matches grid
+            if (!state.selection || state.selection.length !== state.model.gridDimensions.rows) {
+                resetSelection();
+            }
+
+            // Apply settings
+            applyTheme(state.settings.theme);
+            applyFont(state.settings.fontSize);
+
+            // Render
+            renderGridStructure();
+            updateGridContent();
+            renderLayerList();
+            updateUIState();
         }
-        return { ...defaultState };
-      }
 
-      function saveState() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      }
+        function parseAndBuildModel() {
+            // Helper to parse CSV (handling simple comma splits, assuming no commas in labels based on sample)
+            const labelRows = CSV_LABELS.trim().split('\n').map(r => r.split(',').map(s => s.trim()));
+            const colorRows = CSV_COLORS.trim().split('\n').map(r => r.split(',').map(s => s.trim()));
 
-      function ensureDefaultOverlay() {
-        if (!state.overlays.length) {
-          const cells = [];
-          gridData.rows.forEach(row => {
-            row.cells.forEach(cell => {
-              if (cell.label) cells.push({ rowIndex: cell.rowIndex, colIndex: cell.colIndex });
+            // Header is R0 (minus C0 which is axis label)
+            const xLabels = labelRows[0].slice(1);
+            const headerColors = colorRows[0].slice(1);
+            
+            // Data Rows
+            const gridLabels = [];
+            const gridColors = [];
+            
+            // Skip header row for data
+            for (let i = 1; i < labelRows.length; i++) {
+                // First col is Y-Axis Domain Label
+                // Data cols are 1..end
+                gridLabels.push(labelRows[i]); 
+                // Color rows match label rows 1:1 in index
+                gridColors.push(colorRows[i]);
+            }
+
+            state.model = {
+                id: 'uaf-1.3',
+                name: 'UAF 1.3',
+                modelFramework: 'UAF',
+                gridDimensions: {
+                    rows: gridLabels.length,
+                    columns: xLabels.length // Only data columns count for dim, but we store full rows including y-axis label
+                },
+                xLabels: xLabels, // For column headers
+                headerColors: headerColors,
+                gridLabels: gridLabels,
+                gridColors: gridColors
+            };
+            saveStorage();
+        }
+
+        function createDefaultOverlay() {
+            // UAF 1.3 Default: All cells that are NOT <EMPTY>
+            const rows = state.model.gridDimensions.rows;
+            const cols = state.model.gridDimensions.columns; // This is data col count
+            const cells = [];
+
+            for (let r = 0; r < rows; r++) {
+                const rowArr = [];
+                for (let c = 0; c < state.model.gridLabels[r].length; c++) {
+                    if (c === 0) { rowArr.push(0); continue; } // Y-Axis label col is never part of overlay
+                    const label = state.model.gridLabels[r][c];
+                    rowArr.push(label === '<EMPTY>' ? 0 : 1);
+                }
+                cells.push(rowArr);
+            }
+
+            const ov = {
+                id: crypto.randomUUID(),
+                name: 'UAF 1.3',
+                description: 'Default Complete Framework',
+                cells: cells,
+                visible: true,
+                created: new Date().toISOString()
+            };
+            
+            state.overlays.push(ov);
+            state.settings.layerOrder = [ov.id];
+            saveStorage();
+        }
+
+        function loadStorage() {
+            const m = localStorage.getItem(KEYS.MODELS);
+            const o = localStorage.getItem(KEYS.OVERLAYS);
+            const s = localStorage.getItem(KEYS.SETTINGS);
+
+            if (m) state.model = JSON.parse(m);
+            if (o) state.overlays = JSON.parse(o);
+            if (s) {
+                const saved = JSON.parse(s);
+                state.settings = { ...state.settings, ...saved };
+            }
+        }
+
+        function saveStorage() {
+            localStorage.setItem(KEYS.MODELS, JSON.stringify(state.model));
+            localStorage.setItem(KEYS.OVERLAYS, JSON.stringify(state.overlays));
+            localStorage.setItem(KEYS.SETTINGS, JSON.stringify(state.settings));
+        }
+
+        function resetSelection() {
+             // Create clean 2D array matching grid
+             state.selection = state.model.gridLabels.map(row => new Array(row.length).fill(0));
+             updateSelectionCount();
+        }
+
+        function getContrastYIQ(hexcolor){
+            if(!hexcolor) return 'black';
+            hexcolor = hexcolor.replace("#", "");
+            var r = parseInt(hexcolor.substr(0,2),16);
+            var g = parseInt(hexcolor.substr(2,2),16);
+            var b = parseInt(hexcolor.substr(4,2),16);
+            var yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? '#000000' : '#ffffff';
+        }
+
+        // --------------------------------------------------------------------
+        // Rendering
+        // --------------------------------------------------------------------
+
+        function renderGridStructure() {
+            const table = document.getElementById('main-grid');
+            table.innerHTML = '';
+            
+            // THEAD
+            const thead = document.createElement('thead');
+            const trHead = document.createElement('tr');
+            
+            // Corner
+            const thCorner = document.createElement('th');
+            trHead.appendChild(thCorner);
+
+            state.model.xLabels.forEach((label, idx) => {
+                const th = document.createElement('th');
+                th.innerHTML = label.replace(/\\/g, '<br>');
+                
+                // Header colors from model (parsed from row 0 of CSV)
+                const color = state.model.headerColors ? state.model.headerColors[idx] : null; 
+                
+                if(color && color !== '#FFFFFF' && color !== '#000000') {
+                    th.style.backgroundColor = color;
+                    th.style.color = getContrastYIQ(color);
+                }
+                trHead.appendChild(th);
             });
-          });
-          const defaultOverlay = {
-            id: 'default-uaf-view',
-            name: 'UAF Standard View',
-            description: 'All default viewpoints using the official grid data.',
-            visible: true,
-            cells,
-            metadata: { base: true }
-          };
-          state.overlays.push(defaultOverlay);
+            thead.appendChild(trHead);
+            table.appendChild(thead);
+
+            // TBODY
+            const tbody = document.createElement('tbody');
+            
+            // Iterate Data Rows
+            state.model.gridLabels.forEach((row, rIdx) => {
+                const tr = document.createElement('tr');
+                
+                // Axis Label (Col 0)
+                const thRow = document.createElement('th');
+                thRow.textContent = row[0];
+                const axisColor = state.model.gridColors[rIdx][0];
+                 if(axisColor && axisColor !== '#FFFFFF' && axisColor !== '#000000') {
+                    thRow.style.backgroundColor = axisColor;
+                     thRow.style.color = getContrastYIQ(axisColor);
+                }
+                tr.appendChild(thRow);
+
+                // Cells (Col 1..End)
+                for(let cIdx = 1; cIdx < row.length; cIdx++) {
+                    const td = document.createElement('td');
+                    td.dataset.r = rIdx;
+                    td.dataset.c = cIdx;
+                    
+                    const content = document.createElement('div');
+                    content.className = 'cell-content';
+                    td.appendChild(content);
+
+                    // Click handler
+                    td.addEventListener('click', (e) => handleCellClick(rIdx, cIdx));
+
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
         }
-        if (!state.layerOrder.length) {
-          state.layerOrder = state.overlays.map(overlay => overlay.id);
+
+        function updateGridContent() {
+            const mode = state.settings.activeMode;
+            const table = document.getElementById('main-grid');
+            
+            // Class for hover effects
+            if (mode === 'overlay') {
+                table.classList.add('mode-overlay');
+            } else {
+                table.classList.remove('mode-overlay');
+            }
+
+            // Calculate Merged State
+            const activeLayers = state.settings.layerOrder
+                .map(id => state.overlays.find(o => o.id === id))
+                .filter(o => o && o.visible);
+
+            // Per cell logic
+            // We need to iterate over every data cell in the grid
+            const rows = state.model.gridLabels.length;
+            
+            for(let r = 0; r < rows; r++) {
+                const cols = state.model.gridLabels[r].length; // Col 0 is header
+                for(let c = 1; c < cols; c++) {
+                    const cell = table.rows[r+1].cells[c]; // +1 for thead
+                    const contentDiv = cell.querySelector('.cell-content');
+                    const label = state.model.gridLabels[r][c];
+                    const baseColor = state.model.gridColors[r][c];
+                    
+                    const isEmpty = label === '<EMPTY>';
+                    
+                    // Reset styles
+                    cell.style.backgroundColor = baseColor;
+                    contentDiv.style.color = getContrastYIQ(baseColor);
+                    cell.classList.remove('cell-selected');
+
+                    // Editor Selection Highlight
+                    if (state.selection[r][c] === 1) {
+                        cell.classList.add('cell-selected');
+                    }
+
+                    // Content Logic based on Mode & Merge
+                    if (mode === 'overlay') {
+                        // Editor View: Show Grid + Labels + Selection
+                        // Do NOT show merged Overlay data, just the base grid?
+                        // "When in overlay mode... intent is to allow toggling... grid never 'shrinks'..."
+                        // Usually Editor sees the base grid to select from.
+                        contentDiv.textContent = isEmpty ? '' : label;
+                    } 
+                    else {
+                        // Display Mode Logic
+                        if (activeLayers.length === 0) {
+                            // "ONLY grid with default colors and NO labels"
+                            contentDiv.textContent = '';
+                        } 
+                        else {
+                            // Calculate hits
+                            const hits = activeLayers.filter(ov => ov.cells[r][c] === 1);
+                            
+                            // Merge Modes
+                            if (state.settings.mergeMode === 'none') {
+                                // Last one writes
+                                if (hits.length > 0) {
+                                    const winner = hits[hits.length - 1]; // Topmost is last in list visually? 
+                                    // "Up/Down buttons: reorder layers (affects z-index rendering)"
+                                    // Usually Top of list (index 0) is top? Or Bottom?
+                                    // Implementation: standard array order 0..N.
+                                    // Let's assume index 0 is "Bottom" and N is "Top" (Painter's algorithm).
+                                    // HTML List usually shows Index 0 at top. 
+                                    // If UI list top is Ind 0, then Ind 0 should be "Top" z-index?
+                                    // Let's assume UI List Order = Z-Index Order (Top of list = Top Z).
+                                    // So index 0 is winner.
+                                    
+                                    // Wait, if I iterate array usually user expects Top item to be on top.
+                                    // activeLayers follows settings.layerOrder.
+                                    // Let's say layerOrder[0] is the top item in the sidebar.
+                                    // Then it should be the winner.
+                                    
+                                    contentDiv.textContent = isEmpty ? '' : label;
+                                } else {
+                                    // Not in active layer
+                                    cell.style.backgroundColor = 'var(--bg)'; // Dim/Hide?
+                                    // Actually prompt says "Visible... based on selected".
+                                    // If not in overlay, usually we dim it or hide label.
+                                    // Let's hide label, keep color dim.
+                                    contentDiv.textContent = '';
+                                    cell.style.opacity = '0.3';
+                                }
+                                
+                                // Restore opacity for hits
+                                if (hits.length > 0) cell.style.opacity = '1';
+                            }
+                            else if (state.settings.mergeMode === 'add') {
+                                // Union + Heatmap
+                                if (hits.length > 0 && !isEmpty) {
+                                    const count = hits.length;
+                                    const heatmapColor = HEAT_MAP_COLORS[Math.min(count, 4)];
+                                    cell.style.backgroundColor = heatmapColor;
+                                    contentDiv.style.color = getContrastYIQ(heatmapColor);
+                                    
+                                    // "Show all labels comma-separated" -> List overlay names?
+                                    // Prompt: "Show all labels comma-separated in cell"
+                                    // But the cell label is fixed (Model Artifact).
+                                    // It probably means "Show Overlay Names" OR "Show artifact label".
+                                    // Context: "Rendering cell labels is dynamic".
+                                    // Usually this means showing the Artifact Label if active.
+                                    // If the prompt meant showing WHICH overlays contributed: "Show all labels comma-separated" likely refers to the Artifact Label (which is 1 string). 
+                                    // ACTUALLY: Prompt says "Show all labels comma-separated" under Merge Mode logic.
+                                    // If 3 overlays select this cell, do we repeat the cell label 3 times? No.
+                                    // Do we list the overlay names? "UAF 1.3, Minimal". That makes sense for collision detection.
+                                    // Let's show artifact label + count badge? 
+                                    // Prompt is specific: "Show all labels".
+                                    // I will append overlay names if space permits, or just the artifact label if it's the artifact.
+                                    // Re-reading: "rendering cell labels is dynamic based on those selected".
+                                    // I'll stick to: Show Artifact Label. If multiple, it's just the one label.
+                                    // WAIT: "Show all labels comma-separated in cell" in PROMPT section "Merge Modes".
+                                    // If I have Overlay A (Label: "View 1") and Overlay B (Label: "View 1")...
+                                    // Maybe it implies overlays can rename labels? No, model is static.
+                                    // I will assume it means: Show the artifact label.
+                                    
+                                    contentDiv.textContent = label;
+                                } else {
+                                    contentDiv.textContent = '';
+                                    cell.style.opacity = '0.3';
+                                }
+                            }
+                            else if (state.settings.mergeMode === 'intersect') {
+                                // Only if ALL active layers have it
+                                if (hits.length === activeLayers.length && !isEmpty) {
+                                    contentDiv.textContent = label;
+                                } else {
+                                    contentDiv.textContent = '';
+                                    cell.style.opacity = '0.3';
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-      }
 
-      function createCellNode(cell) {
-        const td = document.createElement('td');
-        td.dataset.row = cell.rowIndex;
-        td.dataset.col = cell.colIndex;
-        td.dataset.label = cell.label;
-        td.style.background = cell.color;
+        // --------------------------------------------------------------------
+        // Interaction Logic
+        // --------------------------------------------------------------------
 
-        const content = document.createElement('div');
-        content.className = 'cell-content';
-        const label = document.createElement('span');
-        label.className = 'cell-label';
-        label.textContent = cell.label;
-        content.appendChild(label);
-        td.appendChild(content);
-        return td;
-      }
-
-      function renderGrid() {
-        gridMount.innerHTML = '';
-        const table = gridMount;
-        const thead = document.createElement('thead');
-        const headRow = document.createElement('tr');
-        const corner = document.createElement('th');
-        corner.className = 'domain-label';
-        corner.textContent = '';
-        headRow.appendChild(corner);
-        const headerColors = colorMatrix[0] || [];
-
-        gridData.headers.forEach((header, index) => {
-          const th = document.createElement('th');
-          th.textContent = header;
-          const axisColor = headerColors[index];
-          if (axisColor) {
-            th.style.background = axisColor;
-            th.style.color = axisColor.toUpperCase() === '#FFFFFF' ? '#1f2530' : '#fff';
-          }
-          headRow.appendChild(th);
-        });
-        thead.appendChild(headRow);
-        table.appendChild(thead);
-
-        const tbody = document.createElement('tbody');
-        gridData.rows.forEach((row, rowIndex) => {
-          const tr = document.createElement('tr');
-          const domainCell = document.createElement('th');
-          domainCell.textContent = row.domain;
-          domainCell.className = 'domain-label';
-          const domainColor = colorMatrix[rowIndex + 1] && colorMatrix[rowIndex + 1][0];
-          if (domainColor) {
-            domainCell.style.background = domainColor;
-            domainCell.style.color = domainColor.toUpperCase() === '#FFFFFF' ? '#1f2530' : '#fff';
-          }
-          tr.appendChild(domainCell);
-          row.cells.forEach(cell => tr.appendChild(createCellNode(cell)));
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-        updateLabelVisibility();
-      }
-
-      function updateLabelVisibility() {
-        gridWrapper.classList.toggle('hide-labels', state.hideAllOverlays);
-        hideAllButton.textContent = state.hideAllOverlays ? 'Show Labels' : 'Hide Labels';
-        saveState();
-      }
-
-      function renderOverlayList() {
-        overlayList.innerHTML = '';
-        const query = (state.searchTerm || '').toLowerCase();
-        const ordered = state.layerOrder
-          .map(id => state.overlays.find(overlay => overlay.id === id))
-          .filter(Boolean);
-        const filtered = ordered.filter(overlay => `${overlay.name} ${overlay.description || ''}`.toLowerCase().includes(query));
-        if (!filtered.length) {
-          const empty = document.createElement('p');
-          empty.textContent = 'No overlays match search. Create one in Editor mode.';
-          empty.className = 'helper-text';
-          overlayList.appendChild(empty);
-          return;
+        function handleCellClick(r, c) {
+            if (state.settings.activeMode !== 'overlay') return;
+            
+            // Toggle selection
+            const val = state.selection[r][c];
+            state.selection[r][c] = val === 1 ? 0 : 1;
+            
+            // Render update (partial)
+            // Just update class logic to avoid full re-render
+            const table = document.getElementById('main-grid');
+            const cell = table.rows[r+1].cells[c];
+            if (state.selection[r][c] === 1) cell.classList.add('cell-selected');
+            else cell.classList.remove('cell-selected');
+            
+            updateSelectionCount();
         }
-        filtered.forEach(overlay => {
-          const card = document.createElement('article');
-          card.className = 'overlay-card';
-          const title = document.createElement('strong');
-          title.textContent = overlay.name;
-          const description = document.createElement('p');
-          description.textContent = overlay.description || 'No description yet.';
-          const metadata = document.createElement('small');
-          metadata.textContent = `${overlay.cells?.length || 0} viewpoints · ${overlay.visible ? 'Visible' : 'Hidden'}`;
-          const toggle = document.createElement('button');
-          toggle.textContent = overlay.visible ? 'Hide layer' : 'Show layer';
-          toggle.addEventListener('click', () => {
-            overlay.visible = !overlay.visible;
-            saveState();
-            renderOverlayList();
-          });
-          card.append(title, description, metadata, toggle);
-          overlayList.appendChild(card);
-        });
-      }
 
-      function swapMode() {
-        state.mode = state.mode === 'viewer' ? 'editor' : 'viewer';
-        viewerPanel.style.display = state.mode === 'viewer' ? 'block' : 'none';
-        if (state.mode === 'editor') editorPanel.classList.add('active'); else editorPanel.classList.remove('active');
-        modeToggle.textContent = state.mode === 'viewer' ? 'Viewer Mode' : 'Editor Mode';
-        saveState();
-      }
-
-      function toggleTheme() {
-        state.theme = state.theme === 'light' ? 'dark' : 'light';
-        document.body.classList.toggle('theme-dark', state.theme === 'dark');
-        document.body.classList.toggle('theme-light', state.theme === 'light');
-        themeToggle.textContent = state.theme === 'dark' ? 'Light Theme' : 'Dark Theme';
-        saveState();
-      }
-
-      function exportState() {
-        const payload = JSON.stringify(state, null, 2);
-        const blob = new Blob([payload], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = 'argos-state.json';
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        URL.revokeObjectURL(url);
-      }
-
-      function showModal() {
-        overlayModal.classList.add('visible');
-        overlayModal.setAttribute('aria-hidden', 'false');
-      }
-
-      function closeModal() {
-        overlayModal.classList.remove('visible');
-        overlayModal.setAttribute('aria-hidden', 'true');
-      }
-
-      function createOverlayFromForm(event) {
-        event.preventDefault();
-        const name = overlayNameInput.value.trim();
-        if (!name) return;
-        const description = overlayDescriptionInput.value.trim();
-        const cellText = overlayCellsInput.value.trim();
-        const labels = cellText
-          .split(/[,\n;]+/)
-          .map(part => part.trim())
-          .filter(Boolean);
-        const cells = [];
-        labels.forEach(label => {
-          const matches = labelLookup.get(label.toLowerCase());
-          if (matches?.length) {
-            cells.push(matches[0]);
-          }
-        });
-        const overlay = {
-          id: `custom-${Date.now()}`,
-          name,
-          description,
-          visible: true,
-          cells,
-          metadata: { createdAt: new Date().toISOString() }
-        };
-        state.overlays.unshift(overlay);
-        state.layerOrder.unshift(overlay.id);
-        saveState();
-        renderOverlayList();
-        overlayForm.reset();
-        closeModal();
-      }
-
-      function handleImport(event) {
-        const file = event.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            const parsed = JSON.parse(reader.result);
-            if (!parsed || !Array.isArray(parsed.overlays)) throw new Error('Invalid Argos state');
-            state.overlays = parsed.overlays;
-            state.layerOrder = parsed.layerOrder || state.overlays.map(o => o.id);
-            state.mode = parsed.mode || state.mode;
-            state.theme = parsed.theme || state.theme;
-            state.hideAllOverlays = !!parsed.hideAllOverlays;
-            state.searchTerm = parsed.searchTerm || '';
-            overlaySearch.value = state.searchTerm;
-            saveState();
-            renderOverlayList();
-          } catch (error) {
-            alert(error.message);
-          }
-        };
-        reader.readAsText(file);
-      }
-
-      function clearStorage() {
-        if (confirm('Clear all overlays and settings?')) {
-          localStorage.removeItem(STORAGE_KEY);
-          location.reload();
+        function updateSelectionCount() {
+            let count = 0;
+            state.selection.forEach(row => row.forEach(val => count += val));
+            document.getElementById('selection-count').innerText = count;
         }
-      }
 
-      function init() {
-        buildGridData();
-        ensureDefaultOverlay();
-        saveState();
-        renderGrid();
-        renderOverlayList();
-        viewerPanel.style.display = 'block';
-        editorPanel.classList.remove('active');
-        document.body.classList.toggle('theme-dark', state.theme === 'dark');
-        document.body.classList.toggle('theme-light', state.theme === 'light');
-        if (state.mode === 'editor') swapMode();
-      }
+        function setMode(newMode) {
+            state.settings.activeMode = newMode;
+            
+            // UI Updates
+            const btnDisp = document.getElementById('btn-mode-display');
+            const btnOver = document.getElementById('btn-mode-overlay');
+            const hud = document.getElementById('editor-hud');
+            const sidebar = document.getElementById('sidebar-layers');
 
-      menuToggle.addEventListener('click', () => {
-        document.body.classList.toggle('menu-open');
-      });
+            if (newMode === 'overlay') {
+                btnDisp.classList.remove('primary');
+                btnOver.classList.add('primary');
+                hud.classList.remove('hidden');
+                sidebar.classList.add('hidden'); // "Layer panel hidden in Overlays mode"
+            } else {
+                btnDisp.classList.add('primary');
+                btnOver.classList.remove('primary');
+                hud.classList.add('hidden');
+                sidebar.classList.remove('hidden');
+                if(!state.settings.isSidebarOpen) sidebar.classList.add('closed');
+            }
+            
+            saveStorage();
+            updateGridContent();
+        }
 
-      hideAllButton.addEventListener('click', () => {
-        state.hideAllOverlays = !state.hideAllOverlays;
-        updateLabelVisibility();
-      });
+        function saveOverlay() {
+            const name = document.getElementById('inp-overlay-name').value || `Overlay ${new Date().toLocaleTimeString()}`;
+            
+            const newOv = {
+                id: crypto.randomUUID(),
+                name: name,
+                description: '',
+                cells: JSON.parse(JSON.stringify(state.selection)), // Deep copy 2D arr
+                visible: true,
+                created: new Date().toISOString()
+            };
 
-      overlaySearch.addEventListener('input', event => {
-        state.searchTerm = event.target.value;
-        saveState();
-        renderOverlayList();
-      });
+            state.overlays.push(newOv);
+            state.settings.layerOrder.unshift(newOv.id); // Add to top
+            
+            saveStorage();
+            
+            // Cleanup
+            document.getElementById('inp-overlay-name').value = '';
+            resetSelection();
+            
+            // Switch back to view? Prompt says: "Switches to Overlays mode" for New Overlay.
+            // Does Save switch back? Usually yes.
+            // Let's stay in Editor to allow bulk creation, or maybe clear selection.
+            // Prompt 5: "Clicking Save ... saves ... HTML form enables adding vars".
+            // I'll stick to staying in Editor but clearing selection.
+            
+            alert('Overlay Saved!');
+            renderLayerList();
+        }
 
-      themeToggle.addEventListener('click', toggleTheme);
-      modeToggle.addEventListener('click', swapMode);
-      createCustomOverlay.addEventListener('click', showModal);
-      modalCancel.addEventListener('click', closeModal);
-      overlayForm.addEventListener('submit', createOverlayFromForm);
-      exportButton.addEventListener('click', exportState);
-      importButton.addEventListener('click', () => importInput.click());
-      importInput.addEventListener('change', handleImport);
-      clearStorageButton.addEventListener('click', clearStorage);
+        // --------------------------------------------------------------------
+        // Layer List Logic
+        // --------------------------------------------------------------------
 
-      init();
-    })();
-  </script>
+        function renderLayerList() {
+            const container = document.getElementById('layer-list');
+            container.innerHTML = '';
+            
+            if (state.overlays.length === 0) {
+                document.getElementById('empty-layers-msg').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('empty-layers-msg').classList.add('hidden');
+            }
+
+            // Render in order of layerOrder
+            state.settings.layerOrder.forEach((id, index) => {
+                const ov = state.overlays.find(o => o.id === id);
+                if (!ov) return;
+
+                const el = document.createElement('div');
+                el.className = 'layer-item';
+                
+                // Content
+                el.innerHTML = `
+                    <input type="checkbox" ${ov.visible ? 'checked' : ''} class="layer-vis-toggle">
+                    <div class="layer-info">
+                        <div class="layer-name" title="${ov.name}">${ov.name}</div>
+                    </div>
+                    <div class="layer-actions">
+                        <button class="up-btn icon-btn" title="Move Up">↑</button>
+                        <button class="down-btn icon-btn" title="Move Down">↓</button>
+                        <button class="del-btn icon-btn danger" title="Delete">✕</button>
+                    </div>
+                `;
+
+                // Event Listeners
+                el.querySelector('.layer-vis-toggle').addEventListener('change', (e) => {
+                    ov.visible = e.target.checked;
+                    saveStorage();
+                    updateGridContent();
+                });
+
+                el.querySelector('.up-btn').addEventListener('click', () => moveLayer(index, -1));
+                el.querySelector('.down-btn').addEventListener('click', () => moveLayer(index, 1));
+                
+                el.querySelector('.del-btn').addEventListener('click', () => {
+                    if(confirm(`Delete overlay "${ov.name}"?`)) {
+                        deleteLayer(id);
+                    }
+                });
+
+                // Rename on double click name
+                el.querySelector('.layer-name').addEventListener('dblclick', () => {
+                   const newName = prompt("Rename overlay:", ov.name);
+                   if(newName) {
+                       ov.name = newName;
+                       saveStorage();
+                       renderLayerList();
+                   }
+                });
+
+                container.appendChild(el);
+            });
+        }
+
+        function moveLayer(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= state.settings.layerOrder.length) return;
+            
+            const arr = state.settings.layerOrder;
+            [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
+            
+            saveStorage();
+            renderLayerList();
+            updateGridContent();
+        }
+
+        function deleteLayer(id) {
+            state.overlays = state.overlays.filter(o => o.id !== id);
+            state.settings.layerOrder = state.settings.layerOrder.filter(lid => lid !== id);
+            saveStorage();
+            renderLayerList();
+            updateGridContent();
+        }
+
+        // --------------------------------------------------------------------
+        // Settings & Utils
+        // --------------------------------------------------------------------
+
+        function applyTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            document.getElementById('btn-theme-toggle').innerText = theme === 'dark' ? 'Switch to Light' : 'Switch to Dark';
+        }
+
+        function applyFont(size) {
+            document.documentElement.style.setProperty('--font-size', size + 'px');
+        }
+
+        function updateUIState() {
+            setMode(state.settings.activeMode);
+            
+            // Sidebar check
+            const sb = document.getElementById('sidebar-layers');
+            if (state.settings.isSidebarOpen) sb.classList.remove('closed');
+            else sb.classList.add('closed');
+
+            // Merge Radio
+            const rad = document.querySelector(`input[name="merge-mode"][value="${state.settings.mergeMode}"]`);
+            if(rad) rad.checked = true;
+        }
+
+        // Export/Import
+        function exportJSON() {
+            const exportObj = {
+                metadata: {
+                    version: "1.0.0",
+                    exported: new Date().toISOString()
+                },
+                ...state
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            
+            // Filename format: ARGOS_0-1-0_YYYY-MM-DD_HH-MM-SS.json
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+            const filename = `ARGOS_0-1-0_${dateStr}_${timeStr}.json`;
+            
+            downloadAnchorNode.setAttribute("download", filename);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importJSON(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    if (json.model && json.overlays) {
+                        state.model = json.model;
+                        state.overlays = json.overlays;
+                        if(json.settings) state.settings = { ...state.settings, ...json.settings };
+                        
+                        saveStorage();
+                        location.reload();
+                    } else {
+                        alert("Invalid ARGOS JSON file.");
+                    }
+                } catch (err) {
+                    alert("Error parsing JSON");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --------------------------------------------------------------------
+        // Event Wiring
+        // --------------------------------------------------------------------
+
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+
+            // Modes
+            document.getElementById('btn-mode-display').addEventListener('click', () => setMode('display'));
+            document.getElementById('btn-mode-overlay').addEventListener('click', () => setMode('overlay'));
+
+            // Sidebar
+            document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+                state.settings.isSidebarOpen = !state.settings.isSidebarOpen;
+                updateUIState();
+                saveStorage();
+            });
+
+            // Settings Menu
+            const menu = document.getElementById('settings-menu');
+            document.getElementById('btn-settings').addEventListener('click', () => menu.classList.add('open'));
+            document.getElementById('btn-close-settings').addEventListener('click', () => menu.classList.remove('open'));
+
+            // Editor Actions
+            document.getElementById('btn-sel-all').addEventListener('click', () => {
+                 state.selection = state.model.gridLabels.map((r, ri) => r.map((c, ci) => ci===0 ? 0 : 1)); // Skip col 0
+                 updateUIState(); renderGridStructure(); updateGridContent(); updateSelectionCount();
+            });
+            document.getElementById('btn-sel-clear').addEventListener('click', () => {
+                resetSelection();
+                updateGridContent();
+            });
+            document.getElementById('btn-sel-invert').addEventListener('click', () => {
+                // Invert, skipping col 0
+                state.selection = state.selection.map(r => r.map((c, i) => i === 0 ? 0 : (c===1 ? 0 : 1)));
+                updateGridContent();
+                updateSelectionCount();
+            });
+            document.getElementById('btn-save-overlay').addEventListener('click', saveOverlay);
+
+            // Layers
+            document.getElementById('btn-new-overlay').addEventListener('click', () => setMode('overlay'));
+            
+            // Merge Modes
+            document.querySelectorAll('input[name="merge-mode"]').forEach(r => {
+                r.addEventListener('change', (e) => {
+                    state.settings.mergeMode = e.target.value;
+                    saveStorage();
+                    updateGridContent();
+                });
+            });
+
+            // Settings Actions
+            document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+                state.settings.theme = state.settings.theme === 'light' ? 'dark' : 'light';
+                applyTheme(state.settings.theme);
+                saveStorage();
+            });
+
+            document.getElementById('btn-font-inc').addEventListener('click', () => {
+                state.settings.fontSize = Math.min(24, state.settings.fontSize + 1);
+                applyFont(state.settings.fontSize); saveStorage();
+            });
+            document.getElementById('btn-font-dec').addEventListener('click', () => {
+                state.settings.fontSize = Math.max(10, state.settings.fontSize - 1);
+                applyFont(state.settings.fontSize); saveStorage();
+            });
+            document.getElementById('btn-font-reset').addEventListener('click', () => {
+                state.settings.fontSize = 14;
+                applyFont(state.settings.fontSize); saveStorage();
+            });
+
+            // Data
+            document.getElementById('btn-clear-storage').addEventListener('click', () => {
+                if(confirm("Clear all data and reset?")) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            });
+            document.getElementById('btn-export').addEventListener('click', exportJSON);
+            document.getElementById('btn-import').addEventListener('click', () => document.getElementById('file-import').click());
+            document.getElementById('file-import').addEventListener('change', (e) => importJSON(e.target.files[0]));
+        });
+
+    </script>
 </body>
 </html>
