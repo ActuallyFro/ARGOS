@@ -359,6 +359,88 @@
             margin-bottom: 0.4rem;
             cursor: pointer;
         }
+
+        /* Model Editor Modal */
+        #model-editor-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        #model-editor-modal.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal-content {
+            background: var(--surface);
+            width: 95%;
+            height: 95%;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+            flex-shrink: 0;
+        }
+        .modal-body {
+            flex: 1;
+            padding: 1rem;
+            overflow: auto;
+            background: var(--bg);
+        }
+        /* Model Grid Editor */
+        .model-grid-editor {
+            display: grid;
+            /* 13 columns: 1 header col + 12 data cols */
+            grid-template-columns: 180px repeat(12, 1fr); 
+            gap: 1px;
+            background: var(--grid-border);
+            border: 1px solid var(--grid-border);
+        }
+        .mge-cell {
+            background: var(--grid-cell_bg);
+            min-height: 50px;
+            padding: 0;
+        }
+        .mge-cell input {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            padding: 4px;
+            background: transparent;
+            font-size: 0.8em;
+            text-align: center;
+            color: inherit;
+        }
+        .mge-cell input:focus {
+            outline: 2px solid var(--primary);
+            background: var(--surface);
+        }
+        .mge-header-row {
+            display: contents;
+        }
+        .mge-row {
+            display: contents;
+        }
+        /* Readonly state for UAF */
+        .model-grid-editor.readonly input {
+            pointer-events: none;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -419,6 +501,12 @@
             <!-- Row 2: Selection Tools -->
             <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: space-between; background: var(--surface-hover); padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border);">
                 <div style="display:flex; gap: 0.5rem; align-items: center;">
+                    <!-- Model Selector in Overlay Editor -->
+                    <select id="sel-hud-model" title="Active Model Reference" style="width: 120px; font-weight: bold;">
+                        <option value="uaf-1.3">UAF 1.3</option>
+                        <!-- Custom Models -->
+                    </select>
+                    <div style="width: 1px; height: 20px; background: var(--border);"></div>
                     <button id="btn-sel-all">Select All</button>
                     <button id="btn-sel-clear">Clear</button>
                     <button id="btn-sel-invert">Invert</button>
@@ -486,6 +574,18 @@
                 <button id="btn-close-settings" class="icon-btn close-btn" title="Close">✕</button>
             </div>
             <div class="panel-content">
+                <!-- Model Management Section -->
+                <div class="control-group">
+                    <h4>Model Management</h4>
+                    <button id="btn-open-model-editor" style="width: 100%; justify-content: space-between; font-weight: 600;">
+                        Open Editor
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </button>
+                    <p style="font-size: 0.75em; color: var(--text-sub); margin-top: 5px;">
+                        Create custom models by mapping new labels to the UAF grid structure.
+                    </p>
+                </div>
+
                 <div class="control-group">
                     <h4>Appearance</h4>
                     <div style="display:flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
@@ -550,6 +650,48 @@
 
     </main>
 
+    <!-- Model Editor Modal -->
+    <div id="model-editor-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <span style="font-size: 1.2rem; font-weight: 700; color: var(--primary);">Model Editor</span>
+                    
+                    <select id="sel-me-model" style="width: 200px;">
+                        <option value="uaf-1.3">UAF 1.3 (Read-Only)</option>
+                    </select>
+
+                    <button id="btn-me-new-template" title="Create New Model (Keep UAF Headers)">+ New</button>
+                    <button id="btn-me-new-blank" title="Create New Blank Model">+ New Blank</button>
+                    <button id="btn-me-clone" title="Clone Current Model">Clone</button>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button id="btn-me-delete" class="danger hidden">Delete Model</button>
+                    <div style="width: 1px; height: 20px; background: var(--border);"></div>
+                    <button id="btn-me-export">Export</button>
+                    <button id="btn-me-import">Import</button>
+                    <input type="file" id="file-me-import" accept=".json" class="hidden">
+                    <div style="width: 1px; height: 20px; background: var(--border);"></div>
+                    <button id="btn-me-save" class="primary">Save Changes</button>
+                    <button id="btn-me-close" class="close-btn" style="border:0; background:none; font-size:1.5em;">✕</button>
+                </div>
+            </div>
+            
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+                    <label>Model Name:</label>
+                    <input type="text" id="inp-me-name" style="width: 300px;" disabled>
+                    <span id="me-ro-badge" class="badge" style="font-size: 0.9em; background: var(--text-sub); color: #fff;">READ-ONLY</span>
+                </div>
+                
+                <div id="me-grid" class="model-grid-editor">
+                    <!-- JS Generated Grid -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --------------------------------------------------------------------
         // Constants & Config
@@ -601,17 +743,19 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         // --------------------------------------------------------------------
 
         const state = {
-            model: null,
+            customModels: [], // Library of {id, name, labels: [[str]]}
+            model: null,      // Current Runtime Model (Compiled with colors)
             overlays: [],
             settings: {
+                activeModelId: 'uaf-1.3', // 'uaf-1.3' or UUID
                 theme: 'light',
                 fontSize: 14,
-                layerOrder: [], // Array of string IDs
-                activeMode: 'display', // 'display' | 'overlay'
-                mergeMode: 'none',     // 'none' | 'add' | 'intersect'
+                layerOrder: [], 
+                activeMode: 'display',
+                mergeMode: 'none',
                 isSidebarOpen: true,
                 selectionColor: '#4A90E2',
-                subdueEmpty: false, // Issue 3
+                subdueEmpty: false,
                 alignment: {
                     headers: { h: 'center', v: 'middle' },
                     cells: { h: 'left', v: 'top' }
@@ -619,7 +763,11 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             },
             // Runtime only
             editingId: null, // ID of overlay currently being edited
-            selection: [] // 2D array of 1/0
+            selection: [], // 2D array of 1/0
+            
+            // Editor Runtime
+            editorModelId: null, // Model currently open in Modal
+            editorBuffer: null   // Copy of labels for editing
         };
 
         // --------------------------------------------------------------------
@@ -627,15 +775,12 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         // --------------------------------------------------------------------
 
         function init() {
+            try {
             loadStorage();
             
-            // Always rebuild model from CSVs to ensure latest data/logic (fixes header colors etc)
-            parseAndBuildModel();
+            // Build Model based on active ID
+            buildActiveModel();
 
-            // NOTE: Default UAF 1.3 Overlay creation logic removed per user request.
-            // Only user-created overlays or imports will exist unless empty?
-            // "There was no overlay... remove all logic to make UAF 1.3 Overlay"
-            
             // Validate selection buffer matches grid
             if (!state.selection || state.selection.length !== state.model.gridDimensions.rows) {
                 resetSelection();
@@ -648,7 +793,6 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 document.getElementById('inp-sel-color').value = state.settings.selectionColor;
                 document.documentElement.style.setProperty('--primary', state.settings.selectionColor);
             }
-            // Issue 3
             if(state.settings.subdueEmpty !== undefined) {
                 document.getElementById('chk-subdue-empty').checked = state.settings.subdueEmpty;
             }
@@ -658,62 +802,101 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             updateGridContent();
             renderLayerList();
             updateUIState();
-            populateOverlaySelect(); // New HUD dropdown
+            populateOverlaySelect();
+            updateModelSelectors(); // Update Dropdowns
+            
+            // Event Listeners (One-offs)
+            bindEvents();
+            } catch(e) {
+                console.error("Initialization Error:", e);
+                alert("ARGOS Initialization Failed:\n" + e.message);
+            }
         }
 
-        function parseAndBuildModel() {
-            // Helper to parse CSV (handling simple comma splits, assuming no commas in labels based on sample)
-            const labelRows = CSV_LABELS.trim().split('\n').map(r => r.split(',').map(s => s.trim()));
-            const colorRows = CSV_COLORS.trim().split('\n').map(r => r.split(',').map(s => s.trim()));
+        function parseDefaultLabels() {
+            return CSV_LABELS.trim().split('\n').map(r => r.split(',').map(s => s.trim()));
+        }
 
-            // Header is R0 (minus C0 which is axis label)
-            const xLabels = labelRows[0].slice(1);
+        function buildActiveModel() {
+            // Base Colors are constant (UAF)
+            const colorRows = CSV_COLORS.trim().split('\n').map(r => r.split(',').map(s => s.trim()));
             const headerColors = colorRows[0].slice(1);
+            const gridColors = colorRows.slice(1);
+
+            let labelRows;
+            let modelId = state.settings.activeModelId;
+            let modelName = 'UAF 1.3';
+
+            // Fetch Labels
+            if (modelId === 'uaf-1.3') {
+                labelRows = parseDefaultLabels();
+            } else {
+                const custom = state.customModels.find(m => m.id === modelId);
+                if (custom) {
+                    labelRows = custom.labels;
+                    modelName = custom.name;
+                } else {
+                    // Fallback if missing
+                    console.warn(`Model ${modelId} not found, reverting to UAF`);
+                    state.settings.activeModelId = 'uaf-1.3';
+                    modelId = 'uaf-1.3';
+                    labelRows = parseDefaultLabels();
+                }
+            }
+
+            // Parse Headers (Row 0 / Col 0)
+            const xLabels = labelRows[0].slice(1);
             
-            // Data Rows
+            // Data Rows (1..End)
             const gridLabels = [];
-            const gridColors = [];
-            
-            // Skip header row for data
             for (let i = 1; i < labelRows.length; i++) {
-                // First col is Y-Axis Domain Label
-                // Data cols are 1..end
                 gridLabels.push(labelRows[i]); 
-                // Color rows match label rows 1:1 in index
-                gridColors.push(colorRows[i]);
             }
 
             state.model = {
-                id: 'uaf-1.3',
-                name: 'UAF 1.3',
-                modelFramework: 'UAF',
+                id: modelId,
+                name: modelName,
+                modelFramework: 'UAF', // Or Custom
                 gridDimensions: {
                     rows: gridLabels.length,
-                    columns: xLabels.length // Only data columns count for dim, but we store full rows including y-axis label
+                    columns: xLabels.length
                 },
-                xLabels: xLabels, // For column headers
+                xLabels: xLabels,
                 headerColors: headerColors,
                 gridLabels: gridLabels,
                 gridColors: gridColors
             };
-            saveStorage();
-        }
-
-        function createDefaultOverlay() {
-           // Deprecated/Removed per user request
+            
+            // Update HUD Dropdown
+            const hudSel = document.getElementById('sel-hud-model');
+            if(hudSel) hudSel.value = modelId;
         }
 
         function loadStorage() {
-            const m = localStorage.getItem(KEYS.MODELS);
+            const m = localStorage.getItem(KEYS.MODELS); // Now array of custom models
             const o = localStorage.getItem(KEYS.OVERLAYS);
             const s = localStorage.getItem(KEYS.SETTINGS);
 
-            if (m) state.model = JSON.parse(m);
+            // Migration: If KEYS.MODELS is a single object (old format), clear it or migrate?
+            // User requested "Return to Base Model", so we can assume we start fresh or with empty custom array
+            if (m) {
+                try {
+                    const parsed = JSON.parse(m);
+                    if (Array.isArray(parsed)) {
+                        state.customModels = parsed;
+                    } else if (parsed.gridLabels) {
+                        // Detected old format (Single Object), ignore it to reset to UAF or migrate?
+                        // Let's ignore it to implement the "clean slate" requested implicitly
+                        state.customModels = [];
+                    }
+                } catch(e) { state.customModels = []; }
+            }
+            
             if (o) state.overlays = JSON.parse(o);
             if (s) {
                 const saved = JSON.parse(s);
                 state.settings = { ...state.settings, ...saved };
-                // Ensure alignment structure exists in old saves
+                // Ensure default alignment
                 if(!state.settings.alignment) {
                      state.settings.alignment = { headers: { h: 'center', v: 'middle' }, cells: { h: 'left', v: 'top' } };
                 }
@@ -721,10 +904,11 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         }
 
         function saveStorage() {
-            localStorage.setItem(KEYS.MODELS, JSON.stringify(state.model));
+            localStorage.setItem(KEYS.MODELS, JSON.stringify(state.customModels));
             localStorage.setItem(KEYS.OVERLAYS, JSON.stringify(state.overlays));
             localStorage.setItem(KEYS.SETTINGS, JSON.stringify(state.settings));
         }
+
 
         function resetSelection() {
              // Create clean 2D array matching grid
@@ -732,19 +916,313 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
              updateSelectionCount();
         }
 
-        function getContrastYIQ(hexcolor){
-            if(!hexcolor) return 'black';
-            hexcolor = hexcolor.replace("#", "");
-            var r = parseInt(hexcolor.substr(0,2),16);
-            var g = parseInt(hexcolor.substr(2,2),16);
-            var b = parseInt(hexcolor.substr(4,2),16);
-            var yiq = ((r*299)+(g*587)+(b*114))/1000;
-            return (yiq >= 128) ? '#000000' : '#ffffff';
+        // --------------------------------------------------------------------
+        // Model Editor Logic
+        // --------------------------------------------------------------------
+
+        function bindEvents() {
+            // HUD Model Selector
+            const hudSel = document.getElementById('sel-hud-model');
+            if(hudSel) {
+                hudSel.addEventListener('change', (e) => {
+                    switchActiveModel(e.target.value);
+                });
+            }
+
+            // Model Editor Open/Close
+            document.getElementById('btn-open-model-editor').onclick = openModelEditor;
+            document.getElementById('btn-me-close').onclick = closeModelEditor;
+
+            // Model Editor Actions
+            document.getElementById('btn-me-new-template').onclick = createResultantModelWithHeaders;
+            document.getElementById('btn-me-new-blank').onclick = createResultantModelBlank;
+            document.getElementById('btn-me-clone').onclick = cloneCurrentEditorModel;
+            document.getElementById('btn-me-save').onclick = saveEditorModel;
+            document.getElementById('btn-me-delete').onclick = deleteEditorModel;
+            document.getElementById('sel-me-model').onchange = (e) => loadEditorModel(e.target.value);
+            
+            // Model Import/Export
+            document.getElementById('btn-me-export').onclick = exportSingleModel;
+            document.getElementById('btn-me-import').onclick = () => document.getElementById('file-me-import').click();
+            document.getElementById('file-me-import').onchange = (e) => importSingleModel(e.target.files[0]);
+        }
+        
+        function updateModelSelectors() {
+            // HUD Dropdown
+            const hudSel = document.getElementById('sel-hud-model');
+            const currentHUD = state.settings.activeModelId;
+            hudSel.innerHTML = '<option value="uaf-1.3">UAF 1.3</option>';
+            state.customModels.forEach(m => {
+                 const opt = document.createElement('option');
+                 opt.value = m.id;
+                 opt.textContent = m.name;
+                 hudSel.appendChild(opt);
+            });
+            hudSel.value = currentHUD;
+
+            // Editor Dropdown
+            const meSel = document.getElementById('sel-me-model');
+            // Preserve selection if possible later, but for now rebuild
+            const currentME = state.editorModelId || 'uaf-1.3';
+            meSel.innerHTML = '<option value="uaf-1.3">UAF 1.3 (Read-Only)</option>';
+            state.customModels.forEach(m => {
+                 const opt = document.createElement('option');
+                 opt.value = m.id;
+                 opt.textContent = m.name;
+                 meSel.appendChild(opt);
+            });
+            meSel.value = currentME;
         }
 
-        // --------------------------------------------------------------------
-        // Rendering
-        // --------------------------------------------------------------------
+        function switchActiveModel(id) {
+            state.settings.activeModelId = id;
+            buildActiveModel();
+            
+            // Visual Refresh
+            renderGridStructure();
+            updateGridContent();
+            saveStorage();
+        }
+
+        function openModelEditor() {
+            document.getElementById('model-editor-modal').classList.add('open');
+            updateModelSelectors();
+            loadEditorModel(state.settings.activeModelId); // Start with whatever is active
+        }
+
+        function closeModelEditor() {
+            document.getElementById('model-editor-modal').classList.remove('open');
+            // Refresh main app in case active model was edited
+            buildActiveModel();
+            renderGridStructure();
+            updateGridContent();
+        }
+
+        function loadEditorModel(id) {
+            state.editorModelId = id;
+            const nameInput = document.getElementById('inp-me-name');
+            const gridContainer = document.getElementById('me-grid');
+            const roBadge = document.getElementById('me-ro-badge');
+            const btnDelete = document.getElementById('btn-me-delete');
+            const btnSave = document.getElementById('btn-me-save');
+
+            let labels;
+
+            if (id === 'uaf-1.3') {
+                labels = parseDefaultLabels();
+                nameInput.value = "UAF 1.3";
+                nameInput.disabled = true;
+                roBadge.classList.remove('hidden');
+                gridContainer.classList.add('readonly');
+                btnDelete.classList.add('hidden');
+                btnSave.disabled = true;
+            } else {
+                const custom = state.customModels.find(m => m.id === id);
+                if(custom) {
+                    labels = JSON.parse(JSON.stringify(custom.labels)); // Deep copy
+                    nameInput.value = custom.name;
+                    nameInput.disabled = false;
+                    roBadge.classList.add('hidden');
+                    gridContainer.classList.remove('readonly');
+                    btnDelete.classList.remove('hidden');
+                    btnSave.disabled = false;
+                }
+            }
+            
+            state.editorBuffer = labels; // 2D array [row][col]
+            renderEditorGrid();
+            
+            // Sync dropdown
+            document.getElementById('sel-me-model').value = id;
+        }
+
+        function renderEditorGrid() {
+            const container = document.getElementById('me-grid');
+            container.innerHTML = '';
+            
+            // We use state.editorBuffer which is the row-major 2D array
+            // Layout: 
+            // Row 0: Header (Empty, Header 1, Header 2...)
+            // Row 1..12: Data (RowHeader, Cell 1, Cell 2...)
+            
+            const rows = state.editorBuffer.length;
+            
+            state.editorBuffer.forEach((row, rIdx) => {
+                row.forEach((txt, cIdx) => {
+                     const cell = document.createElement('div');
+                     cell.className = 'mge-cell';
+                     
+                     const input = document.createElement('input');
+                     input.type = 'text';
+                     input.value = txt;
+                     
+                     // Allow editing always in buffer, but UI might be pointer-events:none via CSS if readonly
+                     input.onchange = (e) => {
+                         state.editorBuffer[rIdx][cIdx] = e.target.value;
+                     };
+                     
+                     // Corner (0,0) usually describes setup, let's keep it editable
+                     
+                     cell.appendChild(input);
+                     container.appendChild(cell);
+                });
+            });
+        }
+
+        function createResultantModelBlank() {
+            // New Empty
+             const newId = crypto.randomUUID();
+             const uaf = parseDefaultLabels();
+             const clean = uaf.map(r => r.map(c => "")); 
+             // Keep the corner label only
+             clean[0][0] = uaf[0][0];
+
+             const newModel = {
+                 id: newId,
+                 name: "New Blank Model",
+                 labels: clean
+             };
+             state.customModels.push(newModel);
+             saveStorage();
+             updateModelSelectors();
+             loadEditorModel(newId);
+             showToast("Created Blank Model");
+        }
+
+        function createResultantModelWithHeaders() {
+             const newId = crypto.randomUUID();
+             const uaf = parseDefaultLabels();
+             // Keep Row 0 (Headers) and Col 0 (Side Headers)
+             const clean = uaf.map((r, rIdx) => {
+                 if(rIdx === 0) return [...r]; // Keep Top Row
+                 return r.map((c, cIdx) => {
+                     if(cIdx === 0) return c; // Keep Left Col
+                     return ""; // Blank data
+                 });
+             });
+
+             const newModel = {
+                 id: newId,
+                 name: "New Custom Model",
+                 labels: clean
+             };
+             state.customModels.push(newModel);
+             saveStorage();
+             updateModelSelectors();
+             loadEditorModel(newId);
+             showToast("Created New Model");
+        }
+
+        function cloneCurrentEditorModel() {
+            // Clone whatever is in buffer
+            const newId = crypto.randomUUID();
+            const sourceName = document.getElementById('inp-me-name').value;
+            
+            const newModel = {
+                id: newId,
+                name: sourceName + " (Copy)",
+                labels: JSON.parse(JSON.stringify(state.editorBuffer))
+            };
+            state.customModels.push(newModel);
+            saveStorage();
+            updateModelSelectors();
+            loadEditorModel(newId);
+            showToast("Model Cloned");
+        }
+
+        function saveEditorModel() {
+            if(state.editorModelId === 'uaf-1.3') return; // Safety
+            
+            const m = state.customModels.find(x => x.id === state.editorModelId);
+            if(m) {
+                m.name = document.getElementById('inp-me-name').value;
+                m.labels = state.editorBuffer; // Already updated by onchange
+                saveStorage();
+                updateModelSelectors();
+                
+                // If active, update main view
+                if(state.settings.activeModelId === m.id) {
+                    buildActiveModel();
+                    renderGridStructure();
+                    updateGridContent();
+                }
+                showToast("Model Saved");
+            }
+        }
+
+        function deleteEditorModel() {
+            if(!confirm("Delete this model?")) return;
+            const id = state.editorModelId;
+            state.customModels = state.customModels.filter(m => m.id !== id);
+            
+            // If deleting active, revert to UAF
+            if(state.settings.activeModelId === id) {
+                state.settings.activeModelId = 'uaf-1.3';
+                switchActiveModel('uaf-1.3');
+            }
+            
+            saveStorage();
+            updateModelSelectors();
+            loadEditorModel('uaf-1.3');
+            showToast("Model Deleted");
+        }
+        
+        function exportSingleModel() {
+            // Export strictly the definition: name + labels
+            // (Colors/GridSize are implicit constants of the system)
+             let data;
+             if(state.editorModelId === 'uaf-1.3') {
+                 data = {
+                     id: 'uaf-1.3',
+                     name: 'UAF 1.3',
+                     labels: parseDefaultLabels()
+                 };
+             } else {
+                 const m = state.customModels.find(x => x.id === state.editorModelId);
+                 if(!m) return;
+                 data = m;
+             }
+             
+             const exportObj = {
+                 metadata: { type: 'ARGOS_SINGLE_MODEL', version: "1.0.1" },
+                 model: data
+             };
+             
+             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+             const safeName = data.name.replace(/\s+/g,'_');
+             triggerDownload(dataStr, `ARGOS-MODEL_${safeName}.json`);
+        }
+
+        function importSingleModel(file) {
+             if(!file) return;
+             const reader = new FileReader();
+             reader.onload = (e) => {
+                 try {
+                     const json = JSON.parse(e.target.result);
+                     if(json.metadata && json.metadata.type === 'ARGOS_SINGLE_MODEL' && json.model) {
+                         const imported = json.model;
+                         // Prevent ID collision
+                         imported.id = crypto.randomUUID();
+                         imported.name = imported.name + " (Imported)";
+                         state.customModels.push(imported);
+                         saveStorage();
+                         updateModelSelectors();
+                         loadEditorModel(imported.id);
+                         showToast("Model Imported Successfully");
+                     } else {
+                         alert("Invalid ARGOS Model file");
+                     }
+                 } catch(err) {
+                     console.error(err);
+                     alert("Error reading file");
+                 }
+             };
+             reader.readAsText(file);
+             // clear input
+             document.getElementById('file-me-import').value = '';
+        }
+
+
 
         function getAlignStyle(type) {
              const a = state.settings.alignment[type];
@@ -1063,6 +1541,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 // Create New
                 const newOv = {
                     id: crypto.randomUUID(),
+                    modelId: state.settings.activeModelId, // Track source model
                     name: name,
                     description: '',
                     cells: JSON.parse(JSON.stringify(state.selection)), // Deep copy 2D arr
@@ -1302,50 +1781,57 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
 
         // Export/Import
         function exportJSON() {
-            const exportObj = {
-                metadata: {
-                    version: "1.0.0",
-                    exported: new Date().toISOString()
-                },
-                ...state
+            const data = {
+                metadata: { type: 'ARGOS_FULL_BACKUP', version: "1.0.1", exported: new Date().toISOString() },
+                // Model is now reconstructed at runtime, but we save Custom Models Library
+                models: state.customModels, 
+                overlays: state.overlays,
+                settings: state.settings
             };
-            
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            
-            // Filename format: ARGOS_0-1-0_YYYY-MM-DD_HH-MM-SS.json
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-            const filename = `ARGOS_0-1-0_${dateStr}_${timeStr}.json`;
-            
-            downloadAnchorNode.setAttribute("download", filename);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+            const now = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+            triggerDownload(dataStr, `ARGOS_BACKUP_${now}.json`);
         }
 
         function importJSON(file) {
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const json = JSON.parse(e.target.result);
-                    if (json.model && json.overlays) {
-                        state.model = json.model;
-                        state.overlays = json.overlays;
-                        if(json.settings) state.settings = { ...state.settings, ...json.settings };
+                    // Basic Validation (Loose check for old versions or new metadata)
+                    if(!json.metadata && !json.model) throw new Error("Invalid Format");
+                    
+                    if(confirm("This will overwrite all current data. Continue?")) {
+                        // Restore
+                        if(json.models) state.customModels = json.models; // New Key
+                        if(json.model && !json.models) state.customModels = []; // Fallback for old saves
+                        if(json.overlays) state.overlays = json.overlays;
+                        if(json.settings) state.settings = json.settings;
                         
                         saveStorage();
-                        location.reload();
-                    } else {
-                        alert("Invalid ARGOS JSON file.");
+                        // Reload App
+                        location.reload(); 
                     }
-                } catch (err) {
-                    alert("Error parsing JSON");
+                } catch(err) {
+                    alert("Error parsing file: " + err.message);
                 }
             };
             reader.readAsText(file);
+        }
+
+        // --------------------------------------------------------------------
+        // Utils
+        // --------------------------------------------------------------------
+
+        function getContrastYIQ(hexcolor){
+            if(!hexcolor) return 'black';
+            hexcolor = hexcolor.replace("#", "");
+            var r = parseInt(hexcolor.substr(0,2),16);
+            var g = parseInt(hexcolor.substr(2,2),16);
+            var b = parseInt(hexcolor.substr(4,2),16);
+            var yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? '#000000' : '#ffffff';
         }
 
         // --------------------------------------------------------------------
@@ -1500,7 +1986,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             document.getElementById('btn-export').addEventListener('click', exportJSON);
             document.getElementById('btn-import').addEventListener('click', () => document.getElementById('file-import').click());
             document.getElementById('file-import').addEventListener('change', (e) => importJSON(e.target.files[0]));
-        });
+        }); // End DOMContentLoaded
 
     </script>
 </body>
