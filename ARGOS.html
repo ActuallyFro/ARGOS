@@ -980,20 +980,25 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             const hud = document.getElementById('editor-hud');
             const sidebar = document.getElementById('sidebar-layers');
             const btnSidebar = document.getElementById('btn-toggle-sidebar');
+            const gridContainer = document.getElementById('grid-container');
 
             if (newMode === 'overlay') {
                 btnDisp.classList.remove('active-blue');
                 btnOver.classList.add('active-orange');
                 hud.classList.remove('hidden');
                 sidebar.classList.add('hidden'); // "Layer panel hidden in Overlays mode"
-                btnSidebar.classList.add('hidden'); // Hide sidebar toggle check
+                btnSidebar.classList.add('hidden'); // Hide sidebar toggle
+                // Add bottom padding to prevent HUD from blocking grid
+                gridContainer.style.paddingBottom = '280px';
             } else {
                  btnDisp.classList.add('active-blue');
                 btnOver.classList.remove('active-orange');
                 hud.classList.add('hidden');
                 sidebar.classList.remove('hidden');
                 if(!state.settings.isSidebarOpen) sidebar.classList.add('closed');
-                btnSidebar.classList.remove('hidden'); // Show sidebar toggle check
+                btnSidebar.classList.remove('hidden'); // Show sidebar toggle
+                // Restore normal padding
+                gridContainer.style.paddingBottom = '1rem';
             }
             
             saveStorage();
