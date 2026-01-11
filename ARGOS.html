@@ -471,11 +471,13 @@
             }
         }
 
-        /* Landscape Specific: User requested double the previous move upward */
+        /* Landscape Specific: "Opposite of last commit" (30vh -> 5vh) */
+        /* User Feedback: "went two times down... opposite from last commit" */
+        /* Last commit moved UP to 30vh. Opposite is moving DOWN. */
+        /* Assuming target is approx 5vh to be cleaner than flush */
         @media (max-width: 932px) and (orientation: landscape) {
             #editor-hud {
-                 /* Moving up to 30vh */
-                 bottom: 30vh !important; 
+                 bottom: 5vh !important; 
             }
         }
     </style>
@@ -1551,8 +1553,8 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 sidebar.classList.remove('hidden');
                 if(!state.settings.isSidebarOpen) sidebar.classList.add('closed');
                 btnSidebar.classList.remove('hidden'); // Show sidebar toggle
-                // Restore normal padding
-                gridContainer.style.paddingBottom = '1rem';
+                // Restore padding (increased to approx 1/12th screen height for visibility)
+                gridContainer.style.paddingBottom = '10vh'; 
 
                 // ISSUE FIX: Discard unsaved changes when leaving editor mode
                 // Reload the currently editing overlay from storage (reverting unsaved buffer in state.selection)
