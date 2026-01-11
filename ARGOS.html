@@ -471,11 +471,11 @@
             }
         }
 
-        /* Landscape Specific: "Went too far down" -> moving back up to approx 10vh */
+        /* Landscape Specific: User requested double the previous move upward */
         @media (max-width: 932px) and (orientation: landscape) {
             #editor-hud {
-                 /* Halfway between 20vh and 10px */
-                 bottom: 10vh !important; 
+                 /* Moving up to 30vh */
+                 bottom: 30vh !important; 
             }
         }
     </style>
