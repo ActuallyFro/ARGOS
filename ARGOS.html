@@ -451,8 +451,8 @@
                 min-width: 0 !important;
                 left: 2.5% !important;
                 transform: none !important;
-                /* Portrait: Flush to bottom (approx 20px) */
-                bottom: 20px !important; 
+                /* Portrait: User requested "moved up at least 50% of its height" (approx 80px up from bottom) */
+                bottom: 80px !important; 
                 max-height: 50vh;
                 overflow-y: auto;
             }
@@ -471,12 +471,11 @@
             }
         }
 
-        /* Landscape Specific: Move Higher */
-        /* Using max-height to detect landscape/short viewports typically used on phones */
+        /* Landscape Specific: "Needs 400% more" -> Assuming request is to be visibly lower/flush */
         @media (max-width: 932px) and (orientation: landscape) {
             #editor-hud {
-                 /* Shift up significantly as requested (approx 40% of screen or fixed large px) */
-                 bottom: 20vh !important; 
+                 /* Flush to bottom */
+                 bottom: 10px !important; 
             }
         }
     </style>
@@ -1544,7 +1543,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 sidebar.classList.add('hidden'); // "Layer panel hidden in Overlays mode"
                 btnSidebar.classList.add('hidden'); // Hide sidebar toggle
                 // Add bottom padding to prevent HUD from blocking grid
-                gridContainer.style.paddingBottom = '600px'; /* Increased again to ensure visibility at bottom */
+                gridContainer.style.paddingBottom = '50vh'; /* Use VH to be dynamic and ensure at least half screen scroll */
             } else {
                  btnDisp.classList.add('active-blue');
                 btnOver.classList.remove('active-orange');
