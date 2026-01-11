@@ -444,18 +444,17 @@
         }
 
         /* Responsive Fixes */
-        /* Base Mobile (Portrait assumed active or default) */
+        /* Base Mobile (Portrait/General) */
         @media (max-width: 768px) {
             #editor-hud {
-                width: 98% !important;
+                width: 95% !important;
                 min-width: 0 !important;
-                left: 1% !important;
+                left: 2.5% !important;
                 transform: none !important;
-                bottom: 10px !important; /* Flush to bottom for Portrait */
-                max-height: 45vh; /* Reduce height to allow seeing grid above */
+                /* Portrait: Flush to bottom (approx 20px) */
+                bottom: 20px !important; 
+                max-height: 50vh;
                 overflow-y: auto;
-                border-bottom: 0; /* Looks docked */
-                border-radius: 8px 8px 0 0;
             }
             .modal-header {
                 flex-direction: column;
@@ -472,13 +471,13 @@
             }
         }
 
-        /* Landscape Specific Override */
-        @media (max-width: 900px) and (orientation: landscape) {
-             #editor-hud {
-                /* Shift up significantly in landscape to clear browser UI features */
-                bottom: 40px !important;
-                max-height: 60vh;
-             }
+        /* Landscape Specific: Move Higher */
+        /* Using max-height to detect landscape/short viewports typically used on phones */
+        @media (max-width: 932px) and (orientation: landscape) {
+            #editor-hud {
+                 /* Shift up significantly as requested (approx 40% of screen or fixed large px) */
+                 bottom: 20vh !important; 
+            }
         }
     </style>
 </head>
@@ -681,7 +680,7 @@
                     <h4>About</h4>
                     <p style="font-size: 0.8em; color: var(--text-sub); line-height: 1.4;">
                         Architecture Repository for Governance & Operational Standards <br><br>
-                        Argos v1.0.3<br><br>
+                        Argos v1.0.2<br><br>
                         ARGOS is designed to support organizations in managing and governing their choices in architectural model views/viewpoints/etc.
                     </p>
                 </div>
@@ -1228,7 +1227,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
              }
              
              const exportObj = {
-                 metadata: { type: 'ARGOS_SINGLE_MODEL', version: "1.0.3" },
+                 metadata: { type: 'ARGOS_SINGLE_MODEL', version: "1.0.2" },
                  model: data
              };
              
@@ -1545,7 +1544,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 sidebar.classList.add('hidden'); // "Layer panel hidden in Overlays mode"
                 btnSidebar.classList.add('hidden'); // Hide sidebar toggle
                 // Add bottom padding to prevent HUD from blocking grid
-                gridContainer.style.paddingBottom = '600px'; /* Significantly increased scroll space */
+                gridContainer.style.paddingBottom = '600px'; /* Increased again to ensure visibility at bottom */
             } else {
                  btnDisp.classList.add('active-blue');
                 btnOver.classList.remove('active-orange');
@@ -1753,7 +1752,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             if(!ov) return;
             
             const exportObj = {
-                metadata: { type: 'ARGOS_SINGLE_OVERLAY', version: "1.0.3" },
+                metadata: { type: 'ARGOS_SINGLE_OVERLAY', version: "1.0.2" },
                 overlay: ov
             };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
@@ -1869,7 +1868,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         // Export/Import
         function exportJSON() {
             const data = {
-                metadata: { type: 'ARGOS_FULL_BACKUP', version: "1.0.3", exported: new Date().toISOString() },
+                metadata: { type: 'ARGOS_FULL_BACKUP', version: "1.0.2", exported: new Date().toISOString() },
                 // Model is now reconstructed at runtime, but we save Custom Models Library
                 models: state.customModels, 
                 overlays: state.overlays,
