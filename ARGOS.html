@@ -451,8 +451,8 @@
                 min-width: 0 !important;
                 left: 2.5% !important;
                 transform: none !important;
-                /* Portrait: User requested "moved up at least 50% of its height" (approx 80px up from bottom) */
-                bottom: 80px !important; 
+                /* Portrait: User requested "move up more" - doubling previous move */
+                bottom: 160px !important; 
                 max-height: 50vh;
                 overflow-y: auto;
             }
@@ -471,11 +471,11 @@
             }
         }
 
-        /* Landscape Specific: "Needs 400% more" -> Assuming request is to be visibly lower/flush */
+        /* Landscape Specific: "Went too far down" -> moving back up to approx 10vh */
         @media (max-width: 932px) and (orientation: landscape) {
             #editor-hud {
-                 /* Flush to bottom */
-                 bottom: 10px !important; 
+                 /* Halfway between 20vh and 10px */
+                 bottom: 10vh !important; 
             }
         }
     </style>
