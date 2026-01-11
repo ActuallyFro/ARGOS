@@ -444,15 +444,18 @@
         }
 
         /* Responsive Fixes */
+        /* Base Mobile (Portrait assumed active or default) */
         @media (max-width: 768px) {
             #editor-hud {
-                width: 95% !important;
+                width: 98% !important;
                 min-width: 0 !important;
-                left: 2.5% !important;
+                left: 1% !important;
                 transform: none !important;
-                bottom: 30% !important; /* Move higher up (User Request: 50% shift but let's do 30% of viewport) */
-                max-height: 50vh;
+                bottom: 10px !important; /* Flush to bottom for Portrait */
+                max-height: 45vh; /* Reduce height to allow seeing grid above */
                 overflow-y: auto;
+                border-bottom: 0; /* Looks docked */
+                border-radius: 8px 8px 0 0;
             }
             .modal-header {
                 flex-direction: column;
@@ -467,6 +470,15 @@
             .panel-header button {
                 padding: 0.5rem; /* Larger touch target */
             }
+        }
+
+        /* Landscape Specific Override */
+        @media (max-width: 900px) and (orientation: landscape) {
+             #editor-hud {
+                /* Shift up significantly in landscape to clear browser UI features */
+                bottom: 40px !important;
+                max-height: 60vh;
+             }
         }
     </style>
 </head>
@@ -607,14 +619,6 @@
                 </div>
 
                 <div class="control-group">
-                    <h4>Export View</h4>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button id="btn-download-png" style="flex: 1;">Download PNG</button>
-                        <button id="btn-download-svg" style="flex: 1;">Download SVG</button>
-                    </div>
-                </div>
-
-                <div class="control-group">
                     <h4>Appearance</h4>
                     <div style="display:flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span>Theme/Mode</span>
@@ -658,6 +662,14 @@
                 </div>
 
                 <div class="control-group">
+                    <h4>Export View</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="btn-download-png" style="flex: 1;">Download PNG</button>
+                        <button id="btn-download-svg" style="flex: 1;">Download SVG</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <h4>Data Management</h4>
                     <button id="btn-export" style="width: 100%; margin-bottom: 0.5rem;">Export JSON</button>
                     <button id="btn-import" style="width: 100%; margin-bottom: 0.5rem;">Import JSON</button>
@@ -669,7 +681,7 @@
                     <h4>About</h4>
                     <p style="font-size: 0.8em; color: var(--text-sub); line-height: 1.4;">
                         Architecture Repository for Governance & Operational Standards <br><br>
-                        Argos v1.0.2<br><br>
+                        Argos v1.0.3<br><br>
                         ARGOS is designed to support organizations in managing and governing their choices in architectural model views/viewpoints/etc.
                     </p>
                 </div>
@@ -1216,7 +1228,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
              }
              
              const exportObj = {
-                 metadata: { type: 'ARGOS_SINGLE_MODEL', version: "1.0.2" },
+                 metadata: { type: 'ARGOS_SINGLE_MODEL', version: "1.0.3" },
                  model: data
              };
              
@@ -1533,7 +1545,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 sidebar.classList.add('hidden'); // "Layer panel hidden in Overlays mode"
                 btnSidebar.classList.add('hidden'); // Hide sidebar toggle
                 // Add bottom padding to prevent HUD from blocking grid
-                gridContainer.style.paddingBottom = '400px'; /* Increased from 280px to accommodate Mobile HUD shift */
+                gridContainer.style.paddingBottom = '600px'; /* Significantly increased scroll space */
             } else {
                  btnDisp.classList.add('active-blue');
                 btnOver.classList.remove('active-orange');
@@ -1741,7 +1753,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             if(!ov) return;
             
             const exportObj = {
-                metadata: { type: 'ARGOS_SINGLE_OVERLAY', version: "1.0.2" },
+                metadata: { type: 'ARGOS_SINGLE_OVERLAY', version: "1.0.3" },
                 overlay: ov
             };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
@@ -1857,7 +1869,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         // Export/Import
         function exportJSON() {
             const data = {
-                metadata: { type: 'ARGOS_FULL_BACKUP', version: "1.0.2", exported: new Date().toISOString() },
+                metadata: { type: 'ARGOS_FULL_BACKUP', version: "1.0.3", exported: new Date().toISOString() },
                 // Model is now reconstructed at runtime, but we save Custom Models Library
                 models: state.customModels, 
                 overlays: state.overlays,
