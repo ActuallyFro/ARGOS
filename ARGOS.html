@@ -339,7 +339,8 @@
             flex-direction: column; /* Multi-row layout */
             gap: 0.8rem;
             z-index: 25;
-            min-width: 700px;
+            width: 90%;
+            max-width: 700px;
             font-size: 14px;
             border-top: 4px solid var(--secondary);
         }
@@ -441,6 +442,32 @@
             pointer-events: none;
             opacity: 0.7;
         }
+
+        /* Responsive Fixes */
+        @media (max-width: 768px) {
+            #editor-hud {
+                width: 95% !important;
+                min-width: 0 !important;
+                left: 2.5% !important;
+                transform: none !important;
+                bottom: 10px !important;
+                max-height: 50vh;
+                overflow-y: auto;
+            }
+            .modal-header {
+                flex-direction: column;
+                gap: 1rem;
+                height: auto;
+            }
+            .modal-header > div {
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 100%;
+            }
+            .panel-header button {
+                padding: 0.5rem; /* Larger touch target */
+            }
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -473,13 +500,6 @@
             <table id="main-grid">
                 <!-- JS will populate -->
             </table>
-            
-            <!-- Download Actions -->
-            <div style="margin-top: 1rem; text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem; color: var(--text-sub);">
-                <span>Download Grid:</span>
-                <button id="btn-download-png" style="font-size: 0.8em;" class="icon-btn">PNG</button>
-                <button id="btn-download-svg" style="font-size: 0.8em;" class="icon-btn">SVG</button>
-            </div>
         </div>
 
         <!-- Editor HUD (Floating) -->
@@ -587,6 +607,14 @@
                 </div>
 
                 <div class="control-group">
+                    <h4>Export View</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="btn-download-png" style="flex: 1;">Download PNG</button>
+                        <button id="btn-download-svg" style="flex: 1;">Download SVG</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <h4>Appearance</h4>
                     <div style="display:flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
                         <span>Theme/Mode</span>
@@ -654,19 +682,19 @@
     <div id="model-editor-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <div style="display: flex; gap: 1rem; align-items: center;">
+                <div style="display: flex; gap: 1rem; align-items: center; flex: 1;">
                     <span style="font-size: 1.2rem; font-weight: 700; color: var(--primary);">Model Editor</span>
                     
-                    <select id="sel-me-model" style="width: 200px;">
+                    <select id="sel-me-model" style="min-width: 150px; flex: 1;">
                         <option value="uaf-1.3">UAF 1.3 (Read-Only)</option>
                     </select>
 
-                    <button id="btn-me-new-template" title="Create New Model (Keep UAF Headers)">+ New (w/ UAF Headers)</button>
-                    <button id="btn-me-new-blank" title="Create New Blank Model">+ New Blank</button>
+                    <button id="btn-me-new-template" title="Create New Model (Keep UAF Headers)" style="white-space: nowrap;">+ New (w/ UAF Headers)</button>
+                    <button id="btn-me-new-blank" title="Create New Blank Model" style="white-space: nowrap;">+ New Blank</button>
                     <button id="btn-me-clone" title="Clone Current Model">Clone</button>
                 </div>
                 
-                <div style="display: flex; gap: 1rem; align-items: center;">
+                <div style="display: flex; gap: 1rem; align-items: center; justify-content: flex-end;">
                     <button id="btn-me-delete" class="danger hidden">Delete Model</button>
                     <div style="width: 1px; height: 20px; background: var(--border);"></div>
                     <button id="btn-me-export">Export</button>
@@ -1367,6 +1395,9 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                     contentDiv.style.color = baseColor ? getContrastYIQ(baseColor) : '';
                     if(!baseColor) contentDiv.style.color = ''; // inherit CSS
 
+                    // FIX ISSUE 2: Ensure Opacity is reset by default every frame
+                    cell.style.opacity = '1';
+
                     cell.classList.remove('cell-selected');
 
                     // Editor Selection Highlight
@@ -1380,6 +1411,17 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                         // Editor View: Show Grid + Labels + Selection
                         // Do NOT show merged Overlay data, just the base grid?
                         contentDiv.textContent = isEmpty ? '' : label;
+
+                        // Issue 2: Apply Subdue to Editor as well?
+                        // User Request: "I cannot 'subdue the cells' when on the editor"
+                        // Refined Logic:
+                        // 1. If highlighted (selected), NEVER subdue.
+                        // 2. If NOT highlighted, and Subdue is ON, then subdue.
+                        if (state.selection[r][c] === 1) {
+                            cell.style.opacity = '1';
+                        } else if (state.settings.subdueEmpty) {
+                            cell.style.opacity = '0.3';
+                        }
                     } 
                     else {
                         // Display Mode Logic
@@ -1401,11 +1443,12 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                                 if (topLayer && topLayer.cells[r][c] === 1) {
                                     contentDiv.textContent = isEmpty ? '' : label;
                                     
-                                    // Use overlay color if available
-                                    if (topLayer.color) {
-                                        cell.style.backgroundColor = topLayer.color;
-                                        contentDiv.style.color = getContrastYIQ(topLayer.color);
-                                    }
+                                    // FIX ISSUE 1: ZERO COLOR ADDED
+                                    // Do not override grid colors with editor highlight colors.
+                                    // if (topLayer.color) {
+                                    //    cell.style.backgroundColor = topLayer.color;
+                                    //    contentDiv.style.color = getContrastYIQ(topLayer.color);
+                                    // }
                                     
                                     cell.style.opacity = '1';
                                 } else {
@@ -1460,13 +1503,8 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             const val = state.selection[r][c];
             state.selection[r][c] = val === 1 ? 0 : 1;
             
-            // Render update (partial)
-            // Just update class logic to avoid full re-render
-            const table = document.getElementById('main-grid');
-            const cell = table.rows[r+1].cells[c];
-            if (state.selection[r][c] === 1) cell.classList.add('cell-selected');
-            else cell.classList.remove('cell-selected');
-            
+            // Fully update grid content to handle "Subdue Empty" logic logic based on selection state
+            updateGridContent();
             updateSelectionCount();
         }
 
@@ -1505,6 +1543,16 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 btnSidebar.classList.remove('hidden'); // Show sidebar toggle
                 // Restore normal padding
                 gridContainer.style.paddingBottom = '1rem';
+
+                // ISSUE FIX: Discard unsaved changes when leaving editor mode
+                // Reload the currently editing overlay from storage (reverting unsaved buffer in state.selection)
+                if (state.editingId) {
+                    const ov = state.overlays.find(o => o.id === state.editingId);
+                    if (ov) {
+                        state.selection = JSON.parse(JSON.stringify(ov.cells));
+                        updateSelectionCount();
+                    }
+                }
             }
             
             saveStorage();
