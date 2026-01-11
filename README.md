@@ -5,6 +5,9 @@
 ![ARGOS Dashboard](./images/argos_dashboard.png)
 
 README updated since v1.0.4.
+See ARGOS Live: [GitHub Pages](https://actuallyfro.github.io/ARGOS/ARGOS.html)
+
+---
 
 ## Table of Contents
 1. [Background & Intent](#background--intent)
