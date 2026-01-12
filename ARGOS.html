@@ -18,6 +18,7 @@
             --secondary: #F5A623; /* Orange for Editor */
             --secondary-fg: #ffffff;
             --danger: #ef4444;
+            --success: #10B981;
             --font-size: 14px;
             --grid-cell_bg: #ffffff;
             --grid-border: #e5e7eb;
@@ -271,7 +272,11 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             animation: fadeInOut 2.5s ease-in-out forwards;
             opacity: 0;
+            font-weight: 500;
         }
+        .toast-success { background: var(--success); color: #fff; }
+        .toast-error { background: var(--danger); color: #fff; }
+        .toast-info { background: var(--primary); color: #fff; }
         @keyframes fadeInOut {
             0% { opacity: 0; transform: translateY(10px); }
             10% { opacity: 1; transform: translateY(0); }
@@ -666,7 +671,7 @@
                 </div>
 
                 <div class="control-group">
-                    <h4>Export View</h4>
+                    <h4>Export Top Layer</h4>
                     <div style="display: flex; gap: 0.5rem;">
                         <button id="btn-download-png" style="flex: 1;">Download PNG</button>
                         <button id="btn-download-svg" style="flex: 1;">Download SVG</button>
@@ -685,7 +690,7 @@
                     <h4>About</h4>
                     <p style="font-size: 0.8em; color: var(--text-sub); line-height: 1.4;">
                         Architecture Repository for Governance & Operational Standards <br><br>
-                        Argos v1.0.4<br><br>
+                        Argos v1.0.5<br><br>
                         ARGOS is designed to support organizations in managing and governing their choices in architectural model views/viewpoints/etc.
                     </p>
                 </div>
@@ -970,7 +975,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             const hudSel = document.getElementById('sel-hud-model');
             if(hudSel) {
                 hudSel.addEventListener('change', (e) => {
-                    switchActiveModel(e.target.value);
+                    if(e.target.value) switchActiveModel(e.target.value);
                 });
             }
 
@@ -996,14 +1001,14 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             // HUD Dropdown
             const hudSel = document.getElementById('sel-hud-model');
             const currentHUD = state.settings.activeModelId;
-            hudSel.innerHTML = '<option value="uaf-1.3">UAF 1.3</option>';
+            hudSel.innerHTML = '<option value="" disabled>Select Model...</option><option value="uaf-1.3">UAF 1.3</option>';
             state.customModels.forEach(m => {
                  const opt = document.createElement('option');
                  opt.value = m.id;
                  opt.textContent = m.name;
                  hudSel.appendChild(opt);
             });
-            hudSel.value = currentHUD;
+            if(currentHUD) hudSel.value = currentHUD;
 
             // Editor Dropdown
             const meSel = document.getElementById('sel-me-model');
@@ -1134,7 +1139,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
              saveStorage();
              updateModelSelectors();
              loadEditorModel(newId);
-             showToast("Created Blank Model");
+             showToast("Created Blank Model", "success");
         }
 
         function createResultantModelWithHeaders() {
@@ -1158,7 +1163,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
              saveStorage();
              updateModelSelectors();
              loadEditorModel(newId);
-             showToast("Created New Model");
+             showToast("Created New Model", "success");
         }
 
         function cloneCurrentEditorModel() {
@@ -1175,7 +1180,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             saveStorage();
             updateModelSelectors();
             loadEditorModel(newId);
-            showToast("Model Cloned");
+            showToast("Model Cloned", "success");
         }
 
         function saveEditorModel() {
@@ -1194,7 +1199,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                     renderGridStructure();
                     updateGridContent();
                 }
-                showToast("Model Saved");
+                showToast("Model Saved", "success");
             }
         }
 
@@ -1212,7 +1217,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             saveStorage();
             updateModelSelectors();
             loadEditorModel('uaf-1.3');
-            showToast("Model Deleted");
+            showToast("Model Deleted", "success");
         }
         
         function exportSingleModel() {
@@ -1232,7 +1237,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
              }
              
              const exportObj = {
-                 metadata: { type: 'ARGOS_SINGLE_MODEL', version: "1.0.4" },
+                 metadata: { type: 'ARGOS_SINGLE_MODEL', version: "1.0.5" },
                  model: data
              };
              
@@ -1256,7 +1261,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                          saveStorage();
                          updateModelSelectors();
                          loadEditorModel(imported.id);
-                         showToast("Model Imported Successfully");
+                         showToast("Model Imported Successfully", "success");
                      } else {
                          alert("Invalid ARGOS Model file");
                      }
@@ -1576,6 +1581,11 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 btnSidebar.classList.add('hidden'); // Hide sidebar toggle
                 // Add bottom padding to prevent HUD from blocking grid
                 gridContainer.style.paddingBottom = '50vh'; /* Use VH to be dynamic and ensure at least half screen scroll */
+
+                // Forced Choice Logic for Fresh "Start New"
+                if (!state.editingId) {
+                     document.getElementById('sel-hud-model').value = "";
+                }
             } else {
                  btnDisp.classList.add('active-blue');
                 btnOver.classList.remove('active-orange');
@@ -1620,6 +1630,8 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 state.editingId = null;
                 resetSelection();
                 document.getElementById('inp-overlay-name').value = '';
+                // BUG FIX: Reset Model Selector to force choice
+                document.getElementById('sel-hud-model').value = "";
                 updateSelectionCount();
                 updateGridContent();
                 return;
@@ -1629,6 +1641,16 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 state.editingId = id;
                 state.selection = JSON.parse(JSON.stringify(ov.cells));
                 document.getElementById('inp-overlay-name').value = ov.name;
+                // Auto-switch Model if needed
+                if(ov.modelId && ov.modelId !== state.settings.activeModelId) {
+                    switchActiveModel(ov.modelId);
+                } else {
+                    // Start New logic might have left it blank, or we are on same model
+                    // Ensure dropdown matches
+                    const mId = ov.modelId || 'uaf-1.3';
+                     document.getElementById('sel-hud-model').value = mId;
+                }
+
                 if(ov.color) { 
                     document.getElementById('inp-sel-color').value = ov.color;
                 }
@@ -1637,10 +1659,15 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             }
         }
 
-        function showToast(msg) {
+        function showToast(msg, type = 'default') {
              const c = document.getElementById('toast-container');
              const t = document.createElement('div');
              t.className = 'toast';
+             
+             if (type === 'success') t.classList.add('toast-success');
+             else if (type === 'error') t.classList.add('toast-error');
+             else if (type === 'info') t.classList.add('toast-info');
+             
              t.innerText = msg;
              c.appendChild(t);
              setTimeout(()=>t.remove(), 3000);
@@ -1649,14 +1676,28 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         function saveOverlay() {
             const nameInp = document.getElementById('inp-overlay-name');
             const colorInp = document.getElementById('inp-sel-color');
-            const name = nameInp.value || `Overlay ${new Date().toLocaleTimeString()}`;
             
+            if(!nameInp.value || nameInp.value.trim() === "") {
+                showToast("Overlay Name Needed!", "error");
+                return;
+            }
+            const name = nameInp.value;
+            
+            // Validate Model Selection
+            const rawModelVal = document.getElementById('sel-hud-model').value;
+            if(!rawModelVal) {
+                 showToast("Please Select a Model", "error");
+                 return;
+            }
+            const currentModelId = rawModelVal;
+
             if (state.editingId) {
                 // Update existing
                 const ov = state.overlays.find(o => o.id === state.editingId);
                 if(ov) {
                     ov.name = name;
                     ov.color = colorInp.value;
+                    ov.modelId = currentModelId; // Update persistence
                     ov.cells = JSON.parse(JSON.stringify(state.selection));
                     ov.modified = new Date().toISOString();
                 }
@@ -1664,7 +1705,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 // Create New
                 const newOv = {
                     id: crypto.randomUUID(),
-                    modelId: state.settings.activeModelId, // Track source model
+                    modelId: currentModelId,
                     name: name,
                     description: '',
                     color: colorInp.value,
@@ -1678,7 +1719,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             }
 
             saveStorage();
-            showToast('Overlay Saved!'); // Issue 9
+            showToast('Overlay Saved!', "success"); // Issue 9
             renderLayerList();
             populateOverlaySelect();
         }
@@ -1783,7 +1824,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             if(!ov) return;
             
             const exportObj = {
-                metadata: { type: 'ARGOS_SINGLE_OVERLAY', version: "1.0.4" },
+                metadata: { type: 'ARGOS_SINGLE_OVERLAY', version: "1.0.5" },
                 overlay: ov
             };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
@@ -1899,7 +1940,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         // Export/Import
         function exportJSON() {
             const data = {
-                metadata: { type: 'ARGOS_FULL_BACKUP', version: "1.0.4", exported: new Date().toISOString() },
+                metadata: { type: 'ARGOS_FULL_BACKUP', version: "1.0.5", exported: new Date().toISOString() },
                 // Model is now reconstructed at runtime, but we save Custom Models Library
                 models: state.customModels, 
                 overlays: state.overlays,
@@ -1996,17 +2037,18 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             document.getElementById('sel-edit-overlay').addEventListener('change', (e) => loadOverlayForEdit(e.target.value));
             document.getElementById('btn-export-overlay').addEventListener('click', exportSingleOverlay);
             document.getElementById('btn-delete-overlay').addEventListener('click', () => {
-                if(!state.editingId) { showToast("No overlay selected"); return; }
+                if(!state.editingId) { showToast("No overlay selected", "error"); return; }
                 if(confirm("Permanently delete this overlay? This cannot be undone.")) {
                     deleteLayer(state.editingId);
                     // Reset Editor UI
                     state.editingId = null; 
                     document.getElementById('sel-edit-overlay').value = '';
                     document.getElementById('inp-overlay-name').value = '';
+                    document.getElementById('sel-hud-model').value = ""; // Force Model Choice
                     resetSelection();
                     populateOverlaySelect();
                     updateGridContent();
-                    showToast("Overlay Deleted");
+                    showToast("Overlay Deleted", "success");
                 }
             });
             
@@ -2058,17 +2100,17 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                              saveStorage();
                              renderLayerList();
                              populateOverlaySelect();
-                             showToast('Overlay Imported');
+                             showToast('Overlay Imported', "success");
                              // Switch to it
                              state.editingId = ov.id;
                              document.getElementById('sel-edit-overlay').value = ov.id;
                              loadOverlayForEdit(ov.id);
                         } else {
-                            showToast('Invalid Overlay File');
+                            showToast('Invalid Overlay File', "error");
                         }
                     } catch(err) {
                         console.error(err);
-                        showToast('Error parsing file');
+                        showToast('Error parsing file', "error");
                     }
                 };
                 reader.readAsText(file);
