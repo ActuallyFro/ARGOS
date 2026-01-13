@@ -21,6 +21,8 @@
             --danger: #ef4444;
             --success: #10B981;
             --font-size: 14px;
+            --highlight-row-width: 2px;
+            --highlight-col-width: 2px;
             --grid-cell_bg: #ffffff;
             --grid-border: #e5e7eb;
             --toast-bg: #333;
@@ -324,8 +326,8 @@
         }
 
         /* Highlighting Logic */
-        .highlight-row { outline: 2px solid var(--primary); z-index: 5; }
-        .highlight-col { outline: 2px solid var(--primary); z-index: 5; }
+        .highlight-row { outline: var(--highlight-row-width) solid var(--primary); z-index: 5; }
+        .highlight-col { outline: var(--highlight-col-width) solid var(--primary); z-index: 5; }
 
         /* Settings Menu (Hamburger) */
         #settings-menu {
@@ -682,6 +684,22 @@
                             <button id="btn-font-inc">A+</button>
                         </div>
                     </div>
+                    <div style="display:flex; align-items: center; justify-content: space-between; margin-top: 0.5rem;">
+                        <span>Highlight Row</span>
+                        <div style="display: flex; gap: 5px;">
+                            <button id="btn-hl-row-dec">W-</button>
+                            <button id="btn-hl-row-reset">R</button>
+                            <button id="btn-hl-row-inc">W+</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items: center; justify-content: space-between; margin-top: 0.5rem;">
+                        <span>Highlight Col</span>
+                        <div style="display: flex; gap: 5px;">
+                            <button id="btn-hl-col-dec">W-</button>
+                            <button id="btn-hl-col-reset">R</button>
+                            <button id="btn-hl-col-inc">W+</button>
+                        </div>
+                    </div>
                     <!-- Issue 3: Subdued empty cells -->
                     <div style="margin-top: 0.5rem;">
                          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
@@ -731,7 +749,7 @@
                     <h4>About</h4>
                     <p style="font-size: 0.8em; color: var(--text-sub); line-height: 1.4;">
                         Architecture Repository for Governance & Operational Standards <br><br>
-                        Argos v1.0.6<br><br>
+                        Argos v1.0.7<br><br>
                         ARGOS is designed to support organizations in managing and governing their choices in architectural model views/viewpoints/etc.
                     </p>
                 </div>
@@ -840,6 +858,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
                 activeModelId: 'uaf-1.3', // 'uaf-1.3' or UUID
                 theme: 'light',
                 fontSize: 14,
+                highlightWidth: 2, // New Visual Feature
                 layerOrder: [], 
                 activeMode: 'display',
                 isHighlightActive: false, // New Visual Feature
@@ -880,6 +899,8 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             // Apply settings
             applyTheme(state.settings.theme);
             applyFont(state.settings.fontSize);
+            applyHighlightWidth('row', state.settings.highlightRowWidth || 2);
+            applyHighlightWidth('col', state.settings.highlightColWidth || 2);
             if(state.settings.selectionColor) {
                 document.getElementById('inp-sel-color').value = state.settings.selectionColor;
                 updatePrimaryColors(state.settings.selectionColor);
@@ -1281,7 +1302,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
              }
              
              const exportObj = {
-                 metadata: { type: 'ARGOS_SINGLE_MODEL', version: "1.0.6" },
+                 metadata: { type: 'ARGOS_SINGLE_MODEL', version: "1.0.7" },
                  model: data
              };
              
@@ -1875,7 +1896,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             if(!ov) return;
             
             const exportObj = {
-                metadata: { type: 'ARGOS_SINGLE_OVERLAY', version: "1.0.6" },
+                metadata: { type: 'ARGOS_SINGLE_OVERLAY', version: "1.0.7" },
                 overlay: ov
             };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
@@ -2007,6 +2028,18 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             document.documentElement.style.setProperty('--font-size', size + 'px');
         }
 
+        function applyHighlightWidth(type, width) {
+            const w = Math.max(1, Math.min(10, width)); // Clamp 1-10
+            if(type === 'row') {
+                state.settings.highlightRowWidth = w;
+                document.documentElement.style.setProperty('--highlight-row-width', w + 'px');
+            } else {
+                state.settings.highlightColWidth = w;
+                document.documentElement.style.setProperty('--highlight-col-width', w + 'px');
+            }
+            document.documentElement.style.setProperty('--highlight-width', w + 'px');
+        }
+
         function updateUIState() {
             setMode(state.settings.activeMode);
             
@@ -2034,7 +2067,7 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         // Export/Import
         function exportJSON() {
             const data = {
-                metadata: { type: 'ARGOS_FULL_BACKUP', version: "1.0.6", exported: new Date().toISOString() },
+                metadata: { type: 'ARGOS_FULL_BACKUP', version: "1.0.7", exported: new Date().toISOString() },
                 // Model is now reconstructed at runtime, but we save Custom Models Library
                 models: state.customModels, 
                 overlays: state.overlays,
@@ -2114,7 +2147,9 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
         }
 
         function handleCellHover(r, c, enter) {
-            if(!state.settings.isHighlightActive) return;
+            // Only highlight if active AND not in overlay/editor mode
+            if(!state.settings.isHighlightActive || state.settings.activeMode === 'overlay') return;
+
             const table = document.getElementById('main-grid');
             if(!table) return;
 
@@ -2332,6 +2367,28 @@ Actual Resources (Ar),<EMPTY>,<EMPTY>,Actual Resources Structure (Ar-Sr),Actual 
             document.getElementById('btn-font-reset').addEventListener('click', () => {
                 state.settings.fontSize = 14;
                 applyFont(state.settings.fontSize); saveStorage();
+            });
+
+            // Highlight Row
+            document.getElementById('btn-hl-row-inc').addEventListener('click', () => {
+                applyHighlightWidth('row', (state.settings.highlightRowWidth || 2) + 1); saveStorage();
+            });
+            document.getElementById('btn-hl-row-dec').addEventListener('click', () => {
+                applyHighlightWidth('row', (state.settings.highlightRowWidth || 2) - 1); saveStorage();
+            });
+            document.getElementById('btn-hl-row-reset').addEventListener('click', () => {
+                applyHighlightWidth('row', 2); saveStorage();
+            });
+
+            // Highlight Col
+            document.getElementById('btn-hl-col-inc').addEventListener('click', () => {
+                applyHighlightWidth('col', (state.settings.highlightColWidth || 2) + 1); saveStorage();
+            });
+            document.getElementById('btn-hl-col-dec').addEventListener('click', () => {
+                applyHighlightWidth('col', (state.settings.highlightColWidth || 2) - 1); saveStorage();
+            });
+            document.getElementById('btn-hl-col-reset').addEventListener('click', () => {
+                applyHighlightWidth('col', 2); saveStorage();
             });
 
             // Data
